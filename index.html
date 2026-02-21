@@ -1248,6 +1248,7 @@ a.article-link{text-decoration:none}
   });
 
   /* ═══ SECURITY SCAN ═══ */
+  var SCAN_API = '';  // '' = same origin (local dev), or 'https://YOUR-CLOUD-RUN-URL' for production
   var scanForm = document.getElementById('scan-form');
   var scanBtn = document.getElementById('scan-btn');
   var scanUrlInput = document.getElementById('scan-url');
@@ -1274,7 +1275,7 @@ a.article-link{text-decoration:none}
     resetProgressSteps();
     resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-    fetch('/api/scan', {
+    fetch(SCAN_API + '/api/scan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ repoUrl: repoUrl })
@@ -1288,7 +1289,7 @@ a.article-link{text-decoration:none}
   }
 
   function pollScan(scanId) {
-    fetch('/api/scan/' + scanId)
+    fetch(SCAN_API + '/api/scan/' + scanId)
       .then(function(r) { return r.json(); })
       .then(function(data) {
         if (data.status === 'complete') {

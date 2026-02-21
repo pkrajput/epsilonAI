@@ -1,0 +1,211 @@
+const express = require('express');
+const cors = require('cors');
+const { exec } = require('child_process');
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
+const crypto = require('crypto');
+const admin = require('firebase-admin');
+
+admin.initializeApp();
+const db = admin.firestore();
+
+const app = express();
+app.use(express.json());
+app.use(cors({
+  origin: [
+    'https://www.epsilonai.eu',
+    'https://epsilonai.eu',
+    'http://localhost:3000'
+  ],
+  methods: ['GET', 'POST']
+}));
+
+const PORT = process.env.PORT || 8080;
+
+function isValidGitHubUrl(url) {
+  return /^https:\/\/github\.com\/[\w.-]+\/[\w.-]+/i.test(url.replace(/\/+$/, ''));
+}
+
+function detectLanguage(repoDir) {
+  const langMap = {
+    javascript: ['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs'],
+    python: ['.py'],
+    java: ['.java'],
+    csharp: ['.cs'],
+    go: ['.go'],
+    ruby: ['.rb'],
+    cpp: ['.cpp', '.c', '.cc', '.h', '.hpp'],
+    swift: ['.swift']
+  };
+  const counts = {};
+  function walk(dir, depth) {
+    if (depth > 8) return;
+    try {
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        if (entry.name.startsWith('.') || entry.name === 'node_modules' || entry.name === 'vendor' || entry.name === '__pycache__') continue;
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) walk(full, depth + 1);
+        else {
+          const ext = path.extname(entry.name).toLowerCase();
+          for (const [lang, exts] of Object.entries(langMap)) {
+            if (exts.includes(ext)) counts[lang] = (counts[lang] || 0) + 1;
+          }
+        }
+      }
+    } catch (_) {}
+  }
+  walk(repoDir, 0);
+  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  return sorted.length > 0 ? sorted[0][0] : 'javascript';
+}
+
+function execAsync(cmd, opts = {}) {
+  return new Promise((resolve, reject) => {
+    exec(cmd, { timeout: 600000, maxBuffer: 50 * 1024 * 1024, ...opts }, (err, stdout, stderr) => {
+      if (err) reject(new Error(stderr || err.message));
+      else resolve(stdout);
+    });
+  });
+}
+
+function parseSarif(sarifPath) {
+  const raw = JSON.parse(fs.readFileSync(sarifPath, 'utf8'));
+  const run = raw.runs && raw.runs[0];
+  if (!run) return { findings: [], summary: { total: 0, critical: 0, high: 0, medium: 0, low: 0 } };
+
+  const rules = {};
+  if (run.tool?.driver?.rules) {
+    for (const rule of run.tool.driver.rules) {
+      rules[rule.id] = {
+        name: rule.shortDescription?.text || rule.name || rule.id,
+        description: rule.fullDescription?.text || '',
+        severity: parseFloat(rule.properties?.['security-severity'] || '0'),
+        tags: rule.properties?.tags || []
+      };
+    }
+  }
+
+  const findings = (run.results || []).map(r => {
+    const rule = rules[r.ruleId] || {};
+    const loc = r.locations?.[0]?.physicalLocation;
+    const secSev = rule.severity || 0;
+    let severity = 'low';
+    if (secSev >= 9) severity = 'critical';
+    else if (secSev >= 7) severity = 'high';
+    else if (secSev >= 4) severity = 'medium';
+    else if (r.level === 'error') severity = 'high';
+    else if (r.level === 'warning') severity = 'medium';
+
+    return {
+      ruleId: r.ruleId,
+      name: rule.name || r.ruleId,
+      description: rule.description,
+      message: r.message?.text || '',
+      severity,
+      securitySeverity: secSev,
+      file: loc?.artifactLocation?.uri || '',
+      line: loc?.region?.startLine || 0,
+      column: loc?.region?.startColumn || 0
+    };
+  });
+
+  const sevOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+  findings.sort((a, b) => sevOrder[a.severity] - sevOrder[b.severity]);
+
+  return {
+    findings,
+    summary: {
+      total: findings.length,
+      critical: findings.filter(f => f.severity === 'critical').length,
+      high: findings.filter(f => f.severity === 'high').length,
+      medium: findings.filter(f => f.severity === 'medium').length,
+      low: findings.filter(f => f.severity === 'low').length
+    }
+  };
+}
+
+app.post('/api/scan', (req, res) => {
+  const rawUrl = (req.body.repoUrl || '').trim();
+  if (!rawUrl || !isValidGitHubUrl(rawUrl)) {
+    return res.status(400).json({ error: 'Invalid GitHub URL. Use format: https://github.com/owner/repo' });
+  }
+  const scanId = crypto.randomBytes(8).toString('hex');
+  const repoUrl = rawUrl.replace(/\/+$/, '').replace(/\.git$/, '');
+  const repoName = repoUrl.replace('https://github.com/', '');
+
+  const scanData = {
+    status: 'cloning',
+    step: 'Cloning repository...',
+    repoUrl,
+    repoName,
+    startedAt: admin.firestore.FieldValue.serverTimestamp()
+  };
+
+  db.collection('scans').doc(scanId).set(scanData)
+    .then(() => {
+      runScan(scanId, repoUrl);
+      res.json({ scanId });
+    })
+    .catch(err => res.status(500).json({ error: err.message }));
+});
+
+app.get('/api/scan/:id', async (req, res) => {
+  try {
+    const doc = await db.collection('scans').doc(req.params.id).get();
+    if (!doc.exists) return res.status(404).json({ error: 'Scan not found' });
+    res.json(doc.data());
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+async function runScan(scanId, repoUrl) {
+  const tmpDir = path.join(os.tmpdir(), `epsilon-${scanId}`);
+  const repoDir = path.join(tmpDir, 'repo');
+  const dbDir = path.join(tmpDir, 'db');
+  const resultsFile = path.join(tmpDir, 'results.sarif');
+  const docRef = db.collection('scans').doc(scanId);
+
+  async function updateStatus(fields) {
+    try { await docRef.update(fields); } catch (_) {}
+  }
+
+  try {
+    fs.mkdirSync(tmpDir, { recursive: true });
+
+    await updateStatus({ status: 'cloning', step: 'Cloning repository...' });
+    await execAsync(`git clone --depth 1 "${repoUrl}" "${repoDir}"`);
+
+    await updateStatus({ status: 'detecting', step: 'Detecting language...' });
+    const lang = detectLanguage(repoDir);
+    await updateStatus({ language: lang });
+
+    await updateStatus({ status: 'creating_db', step: 'Building analysis database...' });
+    await execAsync(`codeql database create "${dbDir}" --language=${lang} --source-root="${repoDir}" --overwrite`);
+
+    await updateStatus({ status: 'analyzing', step: 'Running security analysis...' });
+    const queryPack = `codeql/${lang}-queries:codeql-suites/${lang}-security-extended.qls`;
+    await execAsync(`codeql database analyze "${dbDir}" --format=sarif-latest --output="${resultsFile}" ${queryPack}`);
+
+    await updateStatus({ status: 'parsing', step: 'Generating report...' });
+    const results = parseSarif(resultsFile);
+
+    await updateStatus({
+      status: 'complete',
+      step: 'Done',
+      results,
+      completedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+  } catch (err) {
+    await updateStatus({ status: 'error', step: 'Failed', error: err.message });
+  } finally {
+    try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch (_) {}
+  }
+}
+
+app.get('/health', (req, res) => res.json({ status: 'ok' }));
+
+app.listen(PORT, () => {
+  console.log(`Scan service running on port ${PORT}`);
+});

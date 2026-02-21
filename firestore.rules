@@ -1,0 +1,11 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /scans/{scanId} {
+      // Only Cloud Run (admin SDK) can write.
+      // Frontend can read scan results by ID (no listing).
+      allow read: if true;
+      allow write: if false;
+    }
+  }
+}
