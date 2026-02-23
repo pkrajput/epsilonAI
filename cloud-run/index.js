@@ -7,7 +7,8 @@ const os = require('os');
 const crypto = require('crypto');
 const admin = require('firebase-admin');
 
-admin.initializeApp();
+const PROJECT_ID = process.env.GOOGLE_CLOUD_PROJECT || process.env.GCLOUD_PROJECT || 'epsilonai-29b8c';
+admin.initializeApp({ projectId: PROJECT_ID });
 const db = admin.firestore();
 
 const app = express();
@@ -23,8 +24,45 @@ app.use(cors({
 
 const PORT = process.env.PORT || 8080;
 
+function parseGitHubRepoUrl(input) {
+  let raw = (input || '').trim();
+  if (!/^https?:\/\//i.test(raw)) raw = `https://${raw}`;
+  const u = new URL(raw);
+  if (u.hostname.toLowerCase() !== 'github.com') throw new Error('Only GitHub URLs are supported.');
+  const parts = u.pathname.split('/').filter(Boolean);
+  if (parts.length < 2) throw new Error('Invalid GitHub URL. Use format: https://github.com/owner/repo');
+  const owner = parts[0];
+  const repo = parts[1].replace(/\.git$/i, '');
+  if (!owner || !repo) throw new Error('Invalid GitHub URL. Use format: https://github.com/owner/repo');
+  return {
+    owner,
+    repo,
+    repoName: `${owner}/${repo}`,
+    repoUrl: `https://github.com/${owner}/${repo}`
+  };
+}
+
 function isValidGitHubUrl(url) {
-  return /^https:\/\/github\.com\/[\w.-]+\/[\w.-]+/i.test(url.replace(/\/+$/, ''));
+  try {
+    parseGitHubRepoUrl(url);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+function friendlyScanError(message) {
+  const msg = String(message || '');
+  if (/could not read Username for 'https:\/\/github\.com'|terminal prompts disabled/i.test(msg)) {
+    return 'This repository appears to be private or requires authentication. Only public GitHub repositories are supported right now.';
+  }
+  if (/Repository not found|not found/i.test(msg)) {
+    return 'Repository not found. Please check the URL and make sure the repository is public.';
+  }
+  if (/rate limit/i.test(msg)) {
+    return 'GitHub rate limit reached. Please try again in a few minutes.';
+  }
+  return msg.split('\n').slice(0, 6).join(' ').trim() || 'Scan failed. Please try again.';
 }
 
 function detectLanguage(repoDir) {
@@ -62,7 +100,10 @@ function detectLanguage(repoDir) {
 
 function execAsync(cmd, opts = {}) {
   return new Promise((resolve, reject) => {
-    exec(cmd, { timeout: 600000, maxBuffer: 50 * 1024 * 1024, ...opts }, (err, stdout, stderr) => {
+    const baseEnv = { ...process.env, GIT_TERMINAL_PROMPT: '0' };
+    const execOpts = { timeout: 600000, maxBuffer: 50 * 1024 * 1024, env: baseEnv, ...opts };
+    if (opts.env) execOpts.env = { ...baseEnv, ...opts.env };
+    exec(cmd, execOpts, (err, stdout, stderr) => {
       if (err) reject(new Error(stderr || err.message));
       else resolve(stdout);
     });
@@ -131,23 +172,27 @@ app.post('/api/scan', (req, res) => {
     return res.status(400).json({ error: 'Invalid GitHub URL. Use format: https://github.com/owner/repo' });
   }
   const scanId = crypto.randomBytes(8).toString('hex');
-  const repoUrl = rawUrl.replace(/\/+$/, '').replace(/\.git$/, '');
-  const repoName = repoUrl.replace('https://github.com/', '');
+  const parsed = parseGitHubRepoUrl(rawUrl);
 
   const scanData = {
     status: 'cloning',
     step: 'Cloning repository...',
-    repoUrl,
-    repoName,
+    repoUrl: parsed.repoUrl,
+    repoName: parsed.repoName,
+    owner: parsed.owner,
+    repo: parsed.repo,
     startedAt: admin.firestore.FieldValue.serverTimestamp()
   };
 
   db.collection('scans').doc(scanId).set(scanData)
     .then(() => {
-      runScan(scanId, repoUrl);
+      runScan(scanId, parsed);
       res.json({ scanId });
     })
-    .catch(err => res.status(500).json({ error: err.message }));
+    .catch(err => {
+      console.error('Firestore write failed:', err && (err.stack || err.message || err));
+      res.status(500).json({ error: err.message });
+    });
 });
 
 app.get('/api/scan/:id', async (req, res) => {
@@ -165,7 +210,8 @@ app.get('/api/scan/:id', async (req, res) => {
   }
 });
 
-async function runScan(scanId, repoUrl) {
+async function runScan(scanId, parsed) {
+  const repoUrl = parsed.repoUrl;
   const tmpDir = path.join(os.tmpdir(), `epsilon-${scanId}`);
   const repoDir = path.join(tmpDir, 'repo');
   const dbDir = path.join(tmpDir, 'db');
@@ -178,6 +224,26 @@ async function runScan(scanId, repoUrl) {
 
   try {
     fs.mkdirSync(tmpDir, { recursive: true });
+
+    await updateStatus({ status: 'cloning', step: 'Checking repository access...' });
+    try {
+      const r = await fetch(`https://api.github.com/repos/${parsed.owner}/${parsed.repo}`, {
+        headers: {
+          'User-Agent': 'epsilonai-scan-service',
+          'Accept': 'application/vnd.github+json'
+        }
+      });
+      if (r.status === 200) {
+        const j = await r.json();
+        if (j && j.private) throw new Error('Private repositories are not supported.');
+      } else if (r.status === 404) {
+        throw new Error('Repository not found.');
+      } else if (r.status === 403) {
+        // Rate limited or blocked. We'll still attempt clone; git will fail cleanly if needed.
+      }
+    } catch (e) {
+      throw new Error(friendlyScanError(e.message));
+    }
 
     await updateStatus({ status: 'cloning', step: 'Cloning repository...' });
     await execAsync(`git clone --depth 1 "${repoUrl}" "${repoDir}"`);
@@ -203,7 +269,7 @@ async function runScan(scanId, repoUrl) {
       completedAt: admin.firestore.FieldValue.serverTimestamp()
     });
   } catch (err) {
-    await updateStatus({ status: 'error', step: 'Failed', error: err.message });
+    await updateStatus({ status: 'error', step: 'Failed', error: friendlyScanError(err.message) });
   } finally {
     try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch (_) {}
   }
