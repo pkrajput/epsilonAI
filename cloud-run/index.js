@@ -23,6 +23,7 @@ app.use(cors({
 }));
 
 const PORT = process.env.PORT || 8080;
+const CODEQL_BIN = process.env.CODEQL_BIN || '/opt/codeql/codeql';
 
 function parseGitHubRepoUrl(input) {
   let raw = (input || '').trim();
@@ -225,6 +226,12 @@ async function runScan(scanId, parsed) {
   try {
     fs.mkdirSync(tmpDir, { recursive: true });
 
+    try {
+      await execAsync(`"${CODEQL_BIN}" --version`);
+    } catch (_) {
+      throw new Error('Scanning engine is currently unavailable. Please try again in a few minutes.');
+    }
+
     await updateStatus({ status: 'cloning', step: 'Checking repository access...' });
     try {
       const r = await fetch(`https://api.github.com/repos/${parsed.owner}/${parsed.repo}`, {
@@ -253,11 +260,11 @@ async function runScan(scanId, parsed) {
     await updateStatus({ language: lang });
 
     await updateStatus({ status: 'creating_db', step: 'Building analysis database...' });
-    await execAsync(`codeql database create "${dbDir}" --language=${lang} --source-root="${repoDir}" --overwrite`);
+    await execAsync(`"${CODEQL_BIN}" database create "${dbDir}" --language=${lang} --source-root="${repoDir}" --overwrite`);
 
     await updateStatus({ status: 'analyzing', step: 'Running security analysis...' });
     const queryPack = `codeql/${lang}-queries:codeql-suites/${lang}-security-extended.qls`;
-    await execAsync(`codeql database analyze "${dbDir}" --format=sarif-latest --output="${resultsFile}" ${queryPack}`);
+    await execAsync(`"${CODEQL_BIN}" database analyze "${dbDir}" --format=sarif-latest --output="${resultsFile}" ${queryPack}`);
 
     await updateStatus({ status: 'parsing', step: 'Generating report...' });
     const results = parseSarif(resultsFile);

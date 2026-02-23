@@ -11,6 +11,8 @@ app.use(express.static(__dirname));
 
 const PORT = process.env.PORT || 3000;
 const scans = new Map();
+const CLOUD_SCAN_API = process.env.CLOUD_SCAN_API || 'https://scan-service-rqkptq57eq-uc.a.run.app';
+const USE_LOCAL_SCANNER = process.env.USE_LOCAL_SCANNER === '1';
 
 function isValidGitHubUrl(url) {
   return /^https:\/\/github\.com\/[\w.-]+\/[\w.-]+/i.test(url.replace(/\/+$/, ''));
@@ -114,7 +116,21 @@ function parseSarif(sarifPath) {
   };
 }
 
-app.post('/api/scan', (req, res) => {
+app.post('/api/scan', async (req, res) => {
+  if (!USE_LOCAL_SCANNER) {
+    try {
+      const upstream = await fetch(`${CLOUD_SCAN_API}/api/scan`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(req.body || {})
+      });
+      const payload = await upstream.json();
+      return res.status(upstream.status).json(payload);
+    } catch (err) {
+      return res.status(502).json({ error: `Upstream scan service unavailable: ${err.message}` });
+    }
+  }
+
   const rawUrl = (req.body.repoUrl || '').trim();
   if (!rawUrl || !isValidGitHubUrl(rawUrl)) {
     return res.status(400).json({ error: 'Invalid GitHub URL. Use format: https://github.com/owner/repo' });
@@ -127,7 +143,17 @@ app.post('/api/scan', (req, res) => {
   res.json({ scanId });
 });
 
-app.get('/api/scan/:id', (req, res) => {
+app.get('/api/scan/:id', async (req, res) => {
+  if (!USE_LOCAL_SCANNER) {
+    try {
+      const upstream = await fetch(`${CLOUD_SCAN_API}/api/scan/${encodeURIComponent(req.params.id)}`);
+      const payload = await upstream.json();
+      return res.status(upstream.status).json(payload);
+    } catch (err) {
+      return res.status(502).json({ error: `Upstream scan status unavailable: ${err.message}` });
+    }
+  }
+
   const scan = scans.get(req.params.id);
   if (!scan) return res.status(404).json({ error: 'Scan not found' });
   res.json(scan);
@@ -171,7 +197,7 @@ async function runScan(scanId, repoUrl) {
   }
 }
 
-exec('codeql --version', (err, stdout) => {
+if (USE_LOCAL_SCANNER) exec('codeql --version', (err, stdout) => {
   if (err) {
     console.warn('\n  ⚠  CodeQL CLI not found. Install with: brew install --cask codeql');
     console.warn('     Server will start but scans will fail until CodeQL is installed.\n');

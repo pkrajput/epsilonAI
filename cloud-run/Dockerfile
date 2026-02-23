@@ -7,6 +7,9 @@ RUN wget -q https://github.com/github/codeql-cli-binaries/releases/download/v2.2
     && rm codeql-linux64.zip \
     && ln -s /opt/codeql/codeql /usr/local/bin/codeql
 
+ENV CODEQL_BIN="/opt/codeql/codeql"
+ENV PATH="/opt/codeql:${PATH}"
+
 RUN codeql pack download \
     codeql/javascript-queries \
     codeql/python-queries \

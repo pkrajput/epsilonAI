@@ -41,10 +41,11 @@ gcloud run deploy "$SERVICE_NAME" \
   --allow-unauthenticated \
   --memory 4Gi \
   --cpu 2 \
+  --no-cpu-throttling \
   --timeout 600 \
   --max-instances 5 \
   --min-instances 0 \
-  --set-env-vars "NODE_ENV=production"
+  --set-env-vars "NODE_ENV=production,CODEQL_BIN=/opt/codeql/codeql"
 
 # Get the service URL
 URL=$(gcloud run services describe "$SERVICE_NAME" \
