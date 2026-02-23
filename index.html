@@ -1248,7 +1248,7 @@ a.article-link{text-decoration:none}
   });
 
   /* ═══ SECURITY SCAN ═══ */
-  var SCAN_API = '';  // '' = same origin (local dev), or 'https://YOUR-CLOUD-RUN-URL' for production
+  var SCAN_API = 'https://scan-service-rqkptq57eq-uc.a.run.app';  // '' = same origin (local dev), or a full Cloud Run URL for production
   var scanForm = document.getElementById('scan-form');
   var scanBtn = document.getElementById('scan-btn');
   var scanUrlInput = document.getElementById('scan-url');

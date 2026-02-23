@@ -154,7 +154,12 @@ app.get('/api/scan/:id', async (req, res) => {
   try {
     const doc = await db.collection('scans').doc(req.params.id).get();
     if (!doc.exists) return res.status(404).json({ error: 'Scan not found' });
-    res.json(doc.data());
+    const data = doc.data() || {};
+    for (const k of ['startedAt', 'completedAt']) {
+      const v = data[k];
+      if (v && typeof v.toDate === 'function') data[k] = v.toDate().toISOString();
+    }
+    res.json(data);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
