@@ -1387,6 +1387,42 @@ document.addEventListener('click', function(e) {
   var modal = document.getElementById('auth-modal');
   if (e.target === modal) closeAuthModal();
 });
+
+/* ═══ STRIPE CHECKOUT ═══ */
+var STRIPE_PK = 'pk_test_51T6cDgRqSjgrq5zxg3gsIusM0mJ9CHTOUG5q5P5et60bv0i4xYWU3i6nFfFVeLdWb8RtCh4sai0S4vEj8cJB9Tuz00R8guSapj';
+
+function createCheckout(repoUrl) {
+  var scanApi = document.querySelector('[data-scan-api]')?.dataset.scanApi
+    || (window.SCAN_API_URL)
+    || 'https://scan-service-rqkptq57eq-uc.a.run.app';
+  return fetch(scanApi + '/api/create-checkout', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      repoUrl: repoUrl,
+      userId: currentUser ? currentUser.uid : '',
+      userEmail: currentUser ? currentUser.email : ''
+    })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.error) throw new Error(data.error);
+    window.location.href = data.url;
+  });
+}
+
+(function checkStripeReturn() {
+  var params = new URLSearchParams(window.location.search);
+  if (params.get('checkout') === 'success') {
+    history.replaceState(null, '', window.location.pathname);
+    setTimeout(function() {
+      var hero = document.getElementById('hero');
+      if (hero) hero.scrollIntoView({ behavior: 'smooth' });
+    }, 300);
+  } else if (params.get('checkout') === 'cancelled') {
+    history.replaceState(null, '', window.location.pathname);
+  }
+})();
 </script>
 
 <script>
@@ -1520,7 +1556,8 @@ document.addEventListener('click', function(e) {
   });
 
   /* ═══ SECURITY SCAN ═══ */
-  var SCAN_API = 'https://scan-service-rqkptq57eq-uc.a.run.app';  // '' = same origin (local dev), or a full Cloud Run URL for production
+  var SCAN_API = 'https://scan-service-rqkptq57eq-uc.a.run.app';
+  window.SCAN_API_URL = SCAN_API;
   var scanForm = document.getElementById('scan-form');
   var scanBtn = document.getElementById('scan-btn');
   var scanUrlInput = document.getElementById('scan-url');

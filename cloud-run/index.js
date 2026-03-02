@@ -6,19 +6,61 @@ const path = require('path');
 const os = require('os');
 const crypto = require('crypto');
 const admin = require('firebase-admin');
+const Stripe = require('stripe');
 
 const PROJECT_ID = process.env.GOOGLE_CLOUD_PROJECT || process.env.GCLOUD_PROJECT || 'epsilonai-29b8c';
 admin.initializeApp({ projectId: PROJECT_ID });
 const db = admin.firestore();
 
+const stripe = process.env.STRIPE_SECRET_KEY
+  ? new Stripe(process.env.STRIPE_SECRET_KEY)
+  : null;
+
+const ALLOWED_ORIGINS = [
+  'https://www.epsilonai.eu',
+  'https://epsilonai.eu',
+  'http://localhost:3000'
+];
+
 const app = express();
+
+app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  if (!stripe) return res.status(503).json({ error: 'Stripe not configured' });
+  const sig = req.headers['stripe-signature'];
+  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  let event;
+  try {
+    event = endpointSecret
+      ? stripe.webhooks.constructEvent(req.body, sig, endpointSecret)
+      : JSON.parse(req.body);
+  } catch (err) {
+    return res.status(400).json({ error: 'Webhook signature verification failed' });
+  }
+
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object;
+    const repoUrl = session.metadata?.repoUrl;
+    const userId = session.metadata?.userId;
+    try {
+      await db.collection('payments').add({
+        sessionId: session.id,
+        userId: userId || null,
+        repoUrl: repoUrl || null,
+        amount: session.amount_total,
+        currency: session.currency,
+        status: 'paid',
+        createdAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+    } catch (err) {
+      console.error('Failed to record payment:', err.message);
+    }
+  }
+  res.json({ received: true });
+});
+
 app.use(express.json());
 app.use(cors({
-  origin: [
-    'https://www.epsilonai.eu',
-    'https://epsilonai.eu',
-    'http://localhost:3000'
-  ],
+  origin: ALLOWED_ORIGINS,
   methods: ['GET', 'POST']
 }));
 
@@ -288,6 +330,38 @@ async function runScan(scanId, parsed) {
     try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch (_) {}
   }
 }
+
+app.post('/api/create-checkout', async (req, res) => {
+  if (!stripe) return res.status(503).json({ error: 'Stripe not configured' });
+  const { repoUrl, userId, userEmail } = req.body;
+  const origin = ALLOWED_ORIGINS.includes(req.headers.origin)
+    ? req.headers.origin
+    : ALLOWED_ORIGINS[0];
+  try {
+    const session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      line_items: [{
+        price_data: {
+          currency: 'usd',
+          product_data: {
+            name: 'epsilonAI Security Scan',
+            description: repoUrl ? `Deep security audit for ${repoUrl}` : 'Deep security audit'
+          },
+          unit_amount: 999
+        },
+        quantity: 1
+      }],
+      customer_email: userEmail || undefined,
+      metadata: { repoUrl: repoUrl || '', userId: userId || '' },
+      success_url: `${origin}?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}?checkout=cancelled`
+    });
+    res.json({ url: session.url, sessionId: session.id });
+  } catch (err) {
+    console.error('Stripe checkout error:', err.message);
+    res.status(500).json({ error: 'Failed to create checkout session' });
+  }
+});
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 

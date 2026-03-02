@@ -116,6 +116,20 @@ function parseSarif(sarifPath) {
   };
 }
 
+app.post('/api/create-checkout', async (req, res) => {
+  try {
+    const upstream = await fetch(`${CLOUD_SCAN_API}/api/create-checkout`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req.body || {})
+    });
+    const payload = await upstream.json();
+    return res.status(upstream.status).json(payload);
+  } catch (err) {
+    return res.status(502).json({ error: `Stripe service unavailable: ${err.message}` });
+  }
+});
+
 app.post('/api/scan', async (req, res) => {
   if (!USE_LOCAL_SCANNER) {
     try {
