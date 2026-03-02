@@ -1,6 +1,6 @@
 FROM node:20-slim
 
-RUN apt-get update && apt-get install -y git wget unzip && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y git wget unzip python3 python3-pip && rm -rf /var/lib/apt/lists/*
 
 RUN wget -q https://github.com/github/codeql-cli-binaries/releases/download/v2.24.2/codeql-linux64.zip \
     && unzip -q codeql-linux64.zip -d /opt \

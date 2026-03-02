@@ -25,6 +25,13 @@ app.use(cors({
 const PORT = process.env.PORT || 8080;
 const CODEQL_BIN = process.env.CODEQL_BIN || '/opt/codeql/codeql';
 
+function buildDbCreateCommand(lang, dbDir, repoDir) {
+  // For interpreted ecosystems, skip autobuild to avoid flaky extractor setup.
+  const noBuildLangs = new Set(['python', 'javascript', 'ruby']);
+  const buildModePart = noBuildLangs.has(lang) ? ' --build-mode=none' : '';
+  return `"${CODEQL_BIN}" database create "${dbDir}" --language=${lang} --source-root="${repoDir}" --overwrite${buildModePart}`;
+}
+
 function parseGitHubRepoUrl(input) {
   let raw = (input || '').trim();
   if (!/^https?:\/\//i.test(raw)) raw = `https://${raw}`;
@@ -260,7 +267,7 @@ async function runScan(scanId, parsed) {
     await updateStatus({ language: lang });
 
     await updateStatus({ status: 'creating_db', step: 'Building analysis database...' });
-    await execAsync(`"${CODEQL_BIN}" database create "${dbDir}" --language=${lang} --source-root="${repoDir}" --overwrite`);
+    await execAsync(buildDbCreateCommand(lang, dbDir, repoDir));
 
     await updateStatus({ status: 'analyzing', step: 'Running security analysis...' });
     const queryPack = `codeql/${lang}-queries:codeql-suites/${lang}-security-extended.qls`;
