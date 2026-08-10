@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Install GitTRACE</title>
+<meta name="description" content="Install guide for GitTRACE, the trace-based git from epsilonAI. Set up the CLI, create your org, record steps, branch and merge, and sync encrypted.">
+<meta property="og:title" content="Install GitTRACE">
+<meta property="og:description" content="Up and running in minutes: install the CLI, register your org, record steps with reasoning, and sync encrypted end to end.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23fefce8'/%3E%3Cpath d='M9 16h6M15 16l4-5M15 16l4 5' stroke='%233d6b35' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='8' cy='16' r='2.4' fill='%233d6b35'/%3E%3Ccircle cx='21' cy='9.5' r='2.4' fill='%23c2410c'/%3E%3Ccircle cx='21' cy='22.5' r='2.4' fill='%235a8a50'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fefce8;
+    --bg-raised: #f5f0d0;
+    --bg-card: #fffef5;
+    --border: #ddd8b8;
+    --border-strong: #c8c29e;
+    --text: #1f2937;
+    --text-dim: #5c6356;
+    --text-faint: #8a8d82;
+    --green: #3d6b35;
+    --green-dark: #3d5736;
+    --green-light: #5a8a50;
+    --warm: #c4a87c;
+    --rust: #c2410c;
+    --term-bg: #1b2417;
+    --term-border: #33402d;
+    --term-text: #f2f0da;
+    --term-green: #8fbf7f;
+    --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  ::selection { background: rgba(61,107,53,.18); }
+  a { color: inherit; text-decoration: none; }
+  .wrap { max-width: 1152px; margin: 0 auto; padding: 0 24px; }
+
+  /* ── Nav ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    background: rgba(254,252,232,.85);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner {
+    max-width: 1152px; margin: 0 auto; padding: 0 24px;
+    height: 56px; display: flex; align-items: center; justify-content: space-between;
+  }
+  .logo { font-family: var(--mono); font-weight: 600; font-size: 16px; display: flex; align-items: center; gap: 8px; }
+  .logo .git { color: var(--text-faint); }
+  .logo .by { font-size: 11px; font-weight: 400; color: var(--text-faint); margin-left: 4px; }
+  .logo .by b { font-weight: 600; color: var(--text-dim); }
+  .nav-links { display: flex; gap: 24px; align-items: center; }
+  .nav-links a { font-size: 13.5px; color: var(--text-dim); font-weight: 500; transition: color .15s; }
+  .nav-links a:hover { color: var(--text); }
+  @media (max-width: 720px) { .logo .by { display: none; } }
+
+  /* ── Section frame ── */
+  section { padding: 140px 0 88px; }
+  .sec-head { text-align: center; max-width: 680px; margin: 0 auto 50px; }
+  .sec-tag {
+    display: inline-block; font-family: var(--mono); font-size: 12px; font-weight: 600;
+    letter-spacing: .12em; text-transform: uppercase;
+    padding: 4px 12px; border: 1px solid var(--border-strong); border-radius: 99px;
+    margin-bottom: 18px; color: var(--text-dim); background: var(--bg-card);
+  }
+  h1 { font-size: clamp(27px, 4.2vw, 40px); font-weight: 700; letter-spacing: -.025em; line-height: 1.15; margin-bottom: 14px; }
+  .sec-lede { color: var(--text-dim); font-size: 16.5px; }
+
+  /* ── Install steps ── */
+  .steps { max-width: 860px; margin: 0 auto; display: flex; flex-direction: column; gap: 38px; }
+  .step h3 { font-size: 18px; font-weight: 600; letter-spacing: -.015em; margin-bottom: 5px; }
+  .step h3 .n { color: var(--text-faint); font-family: var(--mono); font-size: 14px; margin-right: 10px; }
+  .step .step-desc { color: var(--text-dim); font-size: 14px; margin-bottom: 14px; }
+  .step .step-desc code { font-family: var(--mono); font-size: 12.5px; background: var(--bg-raised); border: 1px solid var(--border); padding: 1px 6px; border-radius: 5px; color: var(--text); }
+  .codeblock { position: relative; background: var(--term-bg); border: 1px solid var(--term-border); border-radius: 10px; overflow: hidden; }
+  .codeblock-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 13px; border-bottom: 1px solid rgba(255,255,255,.08);
+  }
+  .codeblock-lang { font-family: var(--mono); font-size: 11px; color: #7d8a76; letter-spacing: .06em; }
+  .copy-btn {
+    font-family: var(--mono); font-size: 11.5px; font-weight: 500;
+    color: #a8b39e; background: transparent;
+    border: 1px solid rgba(255,255,255,.15); border-radius: 6px;
+    padding: 3px 10px; cursor: pointer;
+    transition: color .15s, border-color .15s;
+  }
+  .copy-btn:hover { color: var(--term-text); border-color: rgba(255,255,255,.3); }
+  .copy-btn.copied { color: var(--term-green); border-color: rgba(143,191,127,.5); }
+  .codeblock pre { padding: 16px 18px; overflow-x: auto; font-family: var(--mono); font-size: 13px; line-height: 1.75; }
+  .codeblock code { color: #d5dbc9; }
+  .c-comment { color: #7d8a76; }
+  .c-cmd { color: var(--term-green); font-weight: 500; }
+  .c-flag { color: var(--warm); }
+  .c-str { color: #e0b34a; }
+  .install-note {
+    max-width: 860px; margin: 36px auto 0;
+    padding: 16px 20px;
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
+    font-size: 13.5px; color: var(--text-dim);
+  }
+  .install-note code { font-family: var(--mono); font-size: 12px; background: var(--bg-raised); border: 1px solid var(--border); padding: 1px 6px; border-radius: 5px; color: var(--text); }
+
+  /* ── Footer ── */
+  footer { border-top: 1px solid var(--border); padding: 44px 0; background: var(--bg-raised); }
+  .footer-inner { display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
+  .footer-co { display: flex; flex-direction: column; gap: 3px; }
+  .footer-co .co-name { font-family: var(--mono); font-weight: 600; font-size: 15px; }
+  .footer-co .co-name .eps { color: var(--green); }
+  .footer-tag { font-size: 13px; color: var(--text-faint); }
+  .footer-links { display: flex; gap: 20px; }
+  .footer-links a { font-size: 13px; color: var(--text-dim); }
+  .footer-links a:hover { color: var(--text); }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a class="logo" href="/">
+      <svg width="20" height="20" viewBox="0 0 32 32" fill="none">
+        <path d="M9 16h6M15 16l4-5M15 16l4 5" stroke="#3d6b35" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="8" cy="16" r="2.4" fill="#3d6b35"/>
+        <circle cx="21" cy="9.5" r="2.4" fill="#c2410c"/>
+        <circle cx="21" cy="22.5" r="2.4" fill="#5a8a50"/>
+      </svg>
+      <span><span class="git">Git</span>TRACE</span>
+      <span class="by">by <b>epsilonAI</b></span>
+    </a>
+    <div class="nav-links">
+      <a href="/">&larr; Back to the site</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Install -->
+<section id="install">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-tag">Install and use</span>
+      <h1>Up and running in minutes.</h1>
+      <p class="sec-lede">The CLI ships two commands. <code style="font-family:var(--mono);font-size:14px">codegraph-trace</code> records and reads history. <code style="font-family:var(--mono);font-size:14px">tracer</code> handles encrypted team sync. You need Python 3.10 or newer and git.</p>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <h3><span class="n">01</span>Install the CLI</h3>
+        <p class="step-desc">From the GitTRACE repository root, create a virtual environment and install. No API key is needed for local recording.</p>
+        <div class="codeblock">
+          <div class="codeblock-bar"><span class="codeblock-lang">bash</span><button class="copy-btn" data-copy>Copy</button></div>
+          <pre><code><span class="c-cmd">python</span> -m venv .venv
+<span class="c-cmd">source</span> .venv/bin/activate          <span class="c-comment"># Windows: .venv\Scripts\activate</span>
+<span class="c-cmd">pip</span> install -r requirements.txt
+<span class="c-cmd">pip</span> install -e <span class="c-str">".[dev,panel,languages]"</span>
+
+<span class="c-cmd">codegraph-trace</span> <span class="c-flag">--help</span>
+<span class="c-cmd">tracer</span> <span class="c-flag">--help</span></code></pre>
+        </div>
+      </div>
+
+      <div class="step">
+        <h3><span class="n">02</span>Create your org and register</h3>
+        <p class="step-desc">One admin creates the entity once. Everyone logs in with four credentials and registers an encryption key. The private half of the key stays on your machine.</p>
+        <div class="codeblock">
+          <div class="codeblock-bar"><span class="codeblock-lang">bash</span><button class="copy-btn" data-copy>Copy</button></div>
+          <pre><code><span class="c-cmd">tracer</span> entity create        <span class="c-comment"># one time, creates your org, you become admin</span>
+<span class="c-cmd">tracer</span> login                <span class="c-comment"># entity name, entity password, username, password</span>
+<span class="c-cmd">tracer</span> keys setup           <span class="c-comment"># generates and registers your encryption key</span>
+<span class="c-cmd">tracer</span> entity add-user      <span class="c-comment"># admins add teammates, --role admin for more admins</span></code></pre>
+        </div>
+      </div>
+
+      <div class="step">
+        <h3><span class="n">03</span>Record steps and read history</h3>
+        <p class="step-desc">Capture any edit between two commits with its reasoning attached. Then open the story of any file.</p>
+        <div class="codeblock">
+          <div class="codeblock-bar"><span class="codeblock-lang">bash</span><button class="copy-btn" data-copy>Copy</button></div>
+          <pre><code><span class="c-cmd">codegraph-trace</span> record step-1 <span class="c-flag">--author</span> human \
+    <span class="c-flag">--reasoning</span> <span class="c-str">"wrote login() by hand"</span> \
+    <span class="c-flag">--before</span> <span class="c-str">&lt;sha&gt;</span> <span class="c-flag">--after</span> <span class="c-str">&lt;sha&gt;</span> <span class="c-flag">--repo</span> .
+
+<span class="c-cmd">codegraph-trace</span> history auth.py <span class="c-flag">--repo</span> .
+<span class="c-cmd">codegraph-trace</span> versions <span class="c-flag">--repo</span> .</code></pre>
+        </div>
+      </div>
+
+      <div class="step">
+        <h3><span class="n">04</span>Branch, merge and review</h3>
+        <p class="step-desc">Fork a lineage from any recorded version and fold it back later. The review command bundles the diff with the reasoning log and the decision ledger.</p>
+        <div class="codeblock">
+          <div class="codeblock-bar"><span class="codeblock-lang">bash</span><button class="copy-btn" data-copy>Copy</button></div>
+          <pre><code><span class="c-cmd">codegraph-trace</span> branch create feat-oauth <span class="c-flag">--from</span> 3 <span class="c-flag">--repo</span> .
+<span class="c-cmd">codegraph-trace</span> branch merge feat-oauth <span class="c-flag">--repo</span> .
+<span class="c-cmd">codegraph-trace</span> review feat-oauth <span class="c-flag">--repo</span> .  <span class="c-comment"># add --json for agents</span>
+<span class="c-cmd">codegraph-trace</span> branches show <span class="c-flag">--repo</span> .</code></pre>
+        </div>
+      </div>
+
+      <div class="step">
+        <h3><span class="n">05</span>Push and pull, encrypted end to end</h3>
+        <p class="step-desc">A push encrypts on your device to all registered member keys and uploads ciphertext. A pull decrypts locally with your private key.</p>
+        <div class="codeblock">
+          <div class="codeblock-bar"><span class="codeblock-lang">bash</span><button class="copy-btn" data-copy>Copy</button></div>
+          <pre><code><span class="c-cmd">tracer</span> push <span class="c-flag">--repo</span> . <span class="c-flag">-m</span> <span class="c-str">"initial trace"</span>
+<span class="c-cmd">tracer</span> pull <span class="c-flag">--repo</span> .
+<span class="c-cmd">tracer</span> review                              <span class="c-comment"># changes awaiting review</span>
+<span class="c-cmd">tracer</span> status                              <span class="c-comment"># entity, members, keys, versions</span></code></pre>
+        </div>
+      </div>
+
+      <div class="step">
+        <h3><span class="n">06</span>Explore it visually</h3>
+        <p class="step-desc">The local panel serves the same codegraph and decision ledger the front page walks through.</p>
+        <div class="codeblock">
+          <div class="codeblock-bar"><span class="codeblock-lang">bash</span><button class="copy-btn" data-copy>Copy</button></div>
+          <pre><code><span class="c-cmd">codegraph-trace</span> panel <span class="c-flag">--port</span> 8765 <span class="c-flag">--repo</span> .
+<span class="c-comment"># open http://127.0.0.1:8765</span></code></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="install-note">
+      If the console scripts are not on your PATH after install, every command also works as <code>python -m codegraph_trace.cli &lt;subcommand&gt;</code>. Agent recording currently supports OpenHands sessions out of the box. Human commits are recorded with <code>record</code>, which is what the VS&nbsp;Code extension uses.
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap footer-inner">
+    <div class="footer-co">
+      <span class="co-name"><span class="eps">epsilon</span>AI</span>
+      <span class="footer-tag">GitTRACE is the trace-based git from epsilonAI. Your code stays off the public internet.</span>
+    </div>
+    <div class="footer-links">
+      <a href="/#what">Overview</a>
+      <a href="/#git">The git</a>
+      <a href="/#view">The view</a>
+      <a href="/install">Install</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+  document.querySelectorAll('[data-copy]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const pre = btn.closest('.codeblock').querySelector('pre');
+      try {
+        await navigator.clipboard.writeText(pre.innerText);
+        btn.textContent = 'Copied';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1600);
+      } catch (_) {
+        const sel = window.getSelection(), range = document.createRange();
+        range.selectNodeContents(pre); sel.removeAllRanges(); sel.addRange(range);
+      }
+    });
+  });
+})();
+</script>
+</body>
+</html>

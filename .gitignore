@@ -3,3 +3,7 @@ node_modules/
 .DS_Store
 *.log
 /tmp/
+
+# Product source and internal docs, never part of the public site
+TRACER/
+week4_part2/

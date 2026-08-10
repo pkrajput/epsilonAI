@@ -3,1707 +3,1020 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>epsilonAI | Security for AI-Built Software</title>
-<meta name="description" content="epsilonAI audits AI-generated software for security vulnerabilities, performance bottlenecks, and infrastructure efficiency.">
+<title>GitTRACE by epsilonAI</title>
+<meta name="description" content="GitTRACE is a trace-based git from epsilonAI. Local version control that records why every change happened, plus a high-level view of your product with a decision ledger and a zoomable codegraph.">
+<meta property="og:title" content="GitTRACE by epsilonAI">
+<meta property="og:description" content="A trace-based git that keeps your code off the public internet, and a high-level view of your product built from the recorded trace.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23fefce8'/%3E%3Cpath d='M9 16h6M15 16l4-5M15 16l4 5' stroke='%233d6b35' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='8' cy='16' r='2.4' fill='%233d6b35'/%3E%3Ccircle cx='21' cy='9.5' r='2.4' fill='%23c2410c'/%3E%3Ccircle cx='21' cy='22.5' r='2.4' fill='%235a8a50'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg-primary:#fefce8;
-  --bg-secondary:#f5f0d0;
-  --bg-card:#fffef5;
-  --accent-primary:#3d6b35;
-  --accent-secondary:#5a8a50;
-  --accent-warm:#c4a87c;
-  --text-primary:#1f2937;
-  --text-secondary:#5c6356;
-  --text-tertiary:#8a8d82;
-  --border:#ddd8b8;
-  --border-hover:#c8c29e;
-  --font-display:'Instrument Sans',system-ui,sans-serif;
-  --font-body:'Satoshi','Instrument Sans',system-ui,sans-serif;
-  --font-mono:'JetBrains Mono',monospace;
-  --nav-height:72px;
-}
-html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
-body{
-  font-family:var(--font-body);
-  color:var(--text-primary);
-  background:var(--bg-primary);
-  line-height:1.6;
-  -webkit-font-smoothing:antialiased;
-  -moz-osx-font-smoothing:grayscale;
-  overflow-x:hidden;
-}
-h1,h2,h3,h4{font-family:var(--font-display);line-height:1.15;font-weight:700}
-a{color:inherit;text-decoration:none}
-img{max-width:100%;display:block}
-button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
-ul{list-style:none}
-.container{width:100%;max-width:1200px;margin:0 auto;padding:0 24px}
-@media(min-width:768px){.container{padding:0 40px}}
-@media(min-width:1280px){.container{padding:0 24px}}
-
-/* ═══ NAVIGATION ═══ */
-.site-nav{
-  position:fixed;top:0;left:0;right:0;z-index:1000;
-  height:var(--nav-height);
-  display:flex;align-items:center;
-  transition:background .3s,border-color .3s,box-shadow .3s;
-  border-bottom:1px solid transparent;
-}
-.site-nav.scrolled{
-  background:rgba(254,252,232,.94);
-  -webkit-backdrop-filter:blur(12px);
-  backdrop-filter:blur(12px);
-  border-bottom-color:var(--border);
-}
-.nav-inner{
-  display:flex;align-items:center;justify-content:space-between;
-  width:100%;max-width:1200px;margin:0 auto;padding:0 24px;
-}
-@media(min-width:768px){.nav-inner{padding:0 40px}}
-@media(min-width:1280px){.nav-inner{padding:0 24px}}
-.nav-logo{
-  font-family:var(--font-display);font-weight:700;font-size:1.25rem;
-  letter-spacing:-.02em;color:var(--text-primary);
-}
-.nav-logo span{color:var(--accent-primary)}
-.nav-links{
-  display:flex;align-items:center;gap:32px;
-}
-.nav-link{
-  font-size:.9rem;font-weight:500;color:var(--text-secondary);
-  transition:color .2s;position:relative;
-}
-.nav-link::after{
-  content:'';position:absolute;bottom:-4px;left:0;width:0;height:2px;
-  background:var(--accent-primary);transition:width .25s;border-radius:1px;
-}
-.nav-link:hover,.nav-link.active{color:var(--text-primary)}
-.nav-link.active::after,.nav-link:hover::after{width:100%}
-.nav-link:focus-visible{outline:2px solid var(--accent-primary);outline-offset:4px;border-radius:2px}
-.nav-cta{
-  font-size:.875rem;font-weight:600;
-  padding:10px 22px;border-radius:8px;
-  background:var(--accent-primary);color:#fff;
-  transition:background .2s,box-shadow .2s;
-  border:none;cursor:pointer;
-}
-.nav-cta:hover{background:#3d5736;box-shadow:0 2px 12px rgba(74,103,65,.18)}
-.nav-cta:focus-visible{outline:2px solid var(--accent-primary);outline-offset:3px}
-.hamburger{
-  display:none;flex-direction:column;gap:5px;
-  background:none;border:none;cursor:pointer;padding:4px;z-index:1001;
-}
-.hamburger span{
-  display:block;width:24px;height:2px;background:var(--text-primary);
-  border-radius:2px;transition:transform .3s,opacity .3s;
-}
-.hamburger.active span:nth-child(1){transform:translateY(7px) rotate(45deg)}
-.hamburger.active span:nth-child(2){opacity:0}
-.hamburger.active span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
-
-@media(max-width:767px){
-  .hamburger{display:flex}
-  .nav-links{
-    position:fixed;top:0;right:0;width:280px;height:100vh;
-    flex-direction:column;align-items:flex-start;gap:0;
-    background:var(--bg-card);
-    padding:calc(var(--nav-height) + 24px) 32px 32px;
-    transform:translateX(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);
-    box-shadow:-8px 0 30px rgba(0,0,0,.08);
+  /*
+    Palette recovered from the previous epsilonAI site (git history of index.html).
+    Layout and section structure adapted from Cruip's open-react-template
+    (github.com/cruip/open-react-template, MIT). Terminal playback follows the
+    termynal line model (github.com/ines/termynal, MIT). The graph section uses
+    the scrollama sticky-graphic pattern (github.com/russellsamora/scrollama).
+  */
+  :root {
+    --bg: #fefce8;
+    --bg-raised: #f5f0d0;
+    --bg-card: #fffef5;
+    --border: #ddd8b8;
+    --border-strong: #c8c29e;
+    --text: #1f2937;
+    --text-dim: #5c6356;
+    --text-faint: #8a8d82;
+    --green: #3d6b35;
+    --green-dark: #3d5736;
+    --green-light: #5a8a50;
+    --warm: #c4a87c;
+    --rust: #c2410c;
+    --red: #b91c1c;
+    --amber: #ca8a04;
+    --term-bg: #1b2417;
+    --term-border: #33402d;
+    --term-text: #f2f0da;
+    --term-out: #c3cbb8;
+    --term-green: #8fbf7f;
+    --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
-  .nav-links.open{transform:translateX(0)}
-  .nav-link,.nav-cta{
-    width:100%;padding:14px 0;font-size:1rem;
-    border-bottom:1px solid var(--border);
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
   }
-  .nav-cta{
-    margin-top:12px;border-bottom:none;text-align:center;
-    padding:14px 22px;border-radius:8px;
+  ::selection { background: rgba(61,107,53,.18); }
+  a { color: inherit; text-decoration: none; }
+  .wrap { max-width: 1152px; margin: 0 auto; padding: 0 24px; }
+
+  /* ── Nav ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    background: rgba(254,252,232,.85);
+    border-bottom: 1px solid var(--border);
   }
-  .nav-signin{
-    width:100%;margin-top:8px;padding:14px 22px;
-    font-size:1rem;text-align:center;border-radius:8px;
+  .nav-inner {
+    max-width: 1152px; margin: 0 auto; padding: 0 24px;
+    height: 56px; display: flex; align-items: center; justify-content: space-between;
   }
-  .nav-user{width:100%;margin-top:12px;padding:8px 0}
-  .auth-modal{padding:28px 24px}
-}
-
-/* ═══ AUTH UI ═══ */
-.auth-signed-out .nav-user,.auth-signed-in .nav-signin{display:none}
-.nav-signin{
-  font-size:.875rem;font-weight:600;
-  padding:10px 22px;border-radius:8px;
-  background:transparent;color:var(--accent-primary);
-  border:1.5px solid var(--accent-primary);
-  cursor:pointer;transition:background .2s,color .2s;
-  white-space:nowrap;
-}
-.nav-signin:hover{background:var(--accent-primary);color:#fff}
-.nav-user{display:flex;align-items:center;gap:10px;position:relative}
-.nav-avatar{
-  width:34px;height:34px;border-radius:50%;
-  border:2px solid var(--accent-primary);
-  object-fit:cover;cursor:pointer;
-}
-.nav-avatar-placeholder{
-  width:34px;height:34px;border-radius:50%;
-  background:var(--accent-primary);color:#fff;
-  display:flex;align-items:center;justify-content:center;
-  font-size:.8rem;font-weight:700;cursor:pointer;
-  font-family:var(--font-display);
-}
-.user-dropdown{
-  position:absolute;top:calc(100% + 8px);right:0;
-  background:var(--bg-card);border:1px solid var(--border);
-  border-radius:10px;padding:8px 0;min-width:200px;
-  box-shadow:0 8px 30px rgba(0,0,0,.1);
-  opacity:0;visibility:hidden;transform:translateY(-6px);
-  transition:opacity .2s,transform .2s,visibility .2s;
-  z-index:2000;
-}
-.user-dropdown.open{opacity:1;visibility:visible;transform:translateY(0)}
-.user-dropdown-name{
-  padding:10px 16px;font-weight:600;font-size:.875rem;
-  border-bottom:1px solid var(--border);color:var(--text-primary);
-}
-.user-dropdown-email{
-  padding:4px 16px 10px;font-size:.75rem;color:var(--text-tertiary);
-  border-bottom:1px solid var(--border);
-}
-.user-dropdown-item{
-  display:block;width:100%;padding:10px 16px;
-  font-size:.875rem;color:var(--text-secondary);
-  background:none;border:none;cursor:pointer;text-align:left;
-  transition:background .15s;
-}
-.user-dropdown-item:hover{background:var(--bg-secondary)}
-.auth-modal-overlay{
-  position:fixed;inset:0;z-index:3000;
-  background:rgba(0,0,0,.4);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);
-  display:flex;align-items:center;justify-content:center;
-  opacity:0;visibility:hidden;transition:opacity .25s,visibility .25s;
-}
-.auth-modal-overlay.open{opacity:1;visibility:visible}
-.auth-modal{
-  background:var(--bg-card);border-radius:16px;
-  padding:40px 36px;max-width:420px;width:90%;
-  box-shadow:0 20px 60px rgba(0,0,0,.15);
-  transform:translateY(20px);transition:transform .3s;
-}
-.auth-modal-overlay.open .auth-modal{transform:translateY(0)}
-.auth-modal h2{
-  font-family:var(--font-display);font-size:1.5rem;
-  margin-bottom:4px;color:var(--text-primary);
-}
-.auth-modal .auth-subtitle{
-  font-size:.9rem;color:var(--text-secondary);margin-bottom:28px;
-}
-.auth-modal-close{
-  position:absolute;top:16px;right:16px;
-  background:none;border:none;cursor:pointer;
-  font-size:1.25rem;color:var(--text-tertiary);
-  padding:4px 8px;border-radius:6px;transition:background .15s;
-}
-.auth-modal-close:hover{background:var(--bg-secondary)}
-.auth-modal{position:relative}
-.btn-google{
-  width:100%;display:flex;align-items:center;justify-content:center;gap:10px;
-  padding:12px 20px;border-radius:10px;font-weight:600;font-size:.9rem;
-  background:#fff;color:#333;border:1.5px solid #ddd;
-  cursor:pointer;transition:border-color .2s,box-shadow .2s;
-}
-.btn-google:hover{border-color:#bbb;box-shadow:0 2px 12px rgba(0,0,0,.06)}
-.btn-google svg{width:20px;height:20px;flex-shrink:0}
-.auth-divider{
-  display:flex;align-items:center;gap:14px;margin:20px 0;
-  font-size:.8rem;color:var(--text-tertiary);
-}
-.auth-divider::before,.auth-divider::after{
-  content:'';flex:1;height:1px;background:var(--border);
-}
-.auth-input{
-  width:100%;padding:12px 14px;border-radius:10px;
-  border:1.5px solid var(--border);background:var(--bg-primary);
-  font-size:.9rem;margin-bottom:12px;
-  transition:border-color .2s;
-}
-.auth-input:focus{outline:none;border-color:var(--accent-primary)}
-.btn-auth-submit{
-  width:100%;padding:12px 20px;border-radius:10px;
-  background:var(--accent-primary);color:#fff;
-  font-weight:600;font-size:.9rem;border:none;
-  cursor:pointer;transition:background .2s;margin-top:4px;
-}
-.btn-auth-submit:hover{background:#3d5736}
-.btn-auth-submit:disabled{opacity:.6;cursor:not-allowed}
-.auth-toggle{
-  text-align:center;margin-top:18px;font-size:.85rem;color:var(--text-secondary);
-}
-.auth-toggle button{
-  background:none;border:none;color:var(--accent-primary);
-  font-weight:600;cursor:pointer;font-size:.85rem;
-  text-decoration:underline;text-underline-offset:2px;
-}
-.auth-error{
-  background:#fef2f2;border:1px solid #fecaca;color:#991b1b;
-  padding:10px 14px;border-radius:8px;font-size:.8rem;
-  margin-bottom:14px;display:none;
-}
-
-/* ═══ REVEAL ANIMATIONS ═══ */
-.reveal{opacity:0;transform:translateY(30px);transition:opacity .7s cubic-bezier(.4,0,.2,1),transform .7s cubic-bezier(.4,0,.2,1)}
-.reveal.visible{opacity:1;transform:translateY(0)}
-.reveal-left{opacity:0;transform:translateX(-40px);transition:opacity .7s cubic-bezier(.4,0,.2,1),transform .7s cubic-bezier(.4,0,.2,1)}
-.reveal-left.visible{opacity:1;transform:translateX(0)}
-.reveal-right{opacity:0;transform:translateX(40px);transition:opacity .7s cubic-bezier(.4,0,.2,1),transform .7s cubic-bezier(.4,0,.2,1)}
-.reveal-right.visible{opacity:1;transform:translateX(0)}
-.stagger-1{transition-delay:.1s}
-.stagger-2{transition-delay:.2s}
-.stagger-3{transition-delay:.3s}
-.stagger-4{transition-delay:.4s}
-.stagger-5{transition-delay:.5s}
-.stagger-6{transition-delay:.6s}
-.stagger-7{transition-delay:.7s}
-.stagger-8{transition-delay:.8s}
-
-/* ═══ HERO ═══ */
-.hero{
-  min-height:100vh;display:flex;align-items:center;
-  position:relative;overflow:hidden;
-  padding:var(--nav-height) 0 0;
-}
-.hero-bg{
-  position:absolute;inset:0;
-  background-image:radial-gradient(circle,var(--border) 1px,transparent 1px);
-  background-size:32px 32px;
-  animation:gridDrift 20s linear infinite;
-  opacity:.5;
-}
-@keyframes gridDrift{
-  0%{background-position:0 0}
-  100%{background-position:32px 32px}
-}
-.hero-content{position:relative;z-index:1;padding:80px 0}
-.hero-headline{
-  font-size:clamp(2.25rem,5vw,4rem);
-  letter-spacing:-.03em;
-  line-height:1.1;
-  margin-bottom:24px;
-  max-width:720px;
-}
-.hero-headline .word{
-  display:inline-block;
-  opacity:0;transform:translateY(20px);
-  animation:wordReveal .6s cubic-bezier(.4,0,.2,1) forwards;
-}
-@keyframes wordReveal{
-  to{opacity:1;transform:translateY(0)}
-}
-.hero-sub{
-  font-size:clamp(1.05rem,1.8vw,1.25rem);
-  color:var(--text-secondary);
-  max-width:560px;
-  margin-bottom:40px;
-  line-height:1.65;
-}
-.hero-actions{display:flex;align-items:center;gap:24px;flex-wrap:wrap}
-.btn-primary{
-  display:inline-flex;align-items:center;gap:8px;
-  padding:14px 28px;border-radius:10px;
-  background:var(--accent-primary);color:#fff;
-  font-weight:600;font-size:1rem;
-  border:none;cursor:pointer;
-  transition:background .2s,box-shadow .2s,transform .15s;
-}
-.btn-primary:hover{background:#3d5736;box-shadow:0 4px 20px rgba(74,103,65,.2)}
-.btn-primary:active{transform:scale(.98)}
-.btn-primary:focus-visible{outline:2px solid var(--accent-primary);outline-offset:3px}
-.hero-secondary{
-  font-weight:500;color:var(--text-secondary);
-  transition:color .2s;font-size:.95rem;
-}
-.hero-secondary:hover{color:var(--accent-primary)}
-.hero-secondary:focus-visible{outline:2px solid var(--accent-primary);outline-offset:3px;border-radius:2px}
-
-/* ═══ SECTION SHARED ═══ */
-.section{padding:100px 0}
-@media(min-width:768px){.section{padding:120px 0}}
-.section-label{
-  font-family:var(--font-mono);
-  font-size:.8rem;font-weight:500;
-  color:var(--accent-primary);
-  letter-spacing:.08em;text-transform:uppercase;
-  margin-bottom:12px;
-}
-.section-title{
-  font-size:clamp(1.75rem,3.5vw,2.75rem);
-  letter-spacing:-.025em;
-  margin-bottom:20px;
-  max-width:640px;
-}
-.section-desc{
-  font-size:1.05rem;color:var(--text-secondary);
-  max-width:600px;line-height:1.7;
-}
-
-/* ═══ REPORT ═══ */
-.report{background:var(--bg-secondary)}
-.report-opening{
-  font-size:clamp(1.1rem,2vw,1.35rem);
-  color:var(--text-primary);
-  max-width:720px;
-  line-height:1.7;
-  margin-bottom:56px;
-}
-.stats-hero{
-  display:grid;
-  grid-template-columns:1fr;
-  gap:24px;
-  margin-bottom:56px;
-}
-@media(min-width:768px){.stats-hero{grid-template-columns:1fr 1fr}}
-@media(min-width:1024px){.stats-hero{grid-template-columns:1fr 1fr 1fr}}
-.stat-card{
-  background:var(--bg-card);
-  border:1px solid var(--border);
-  border-radius:12px;
-  padding:28px 24px;
-  transition:transform .3s,box-shadow .3s;
-}
-.stat-card:hover{
-  transform:translateY(-4px);
-  box-shadow:0 8px 30px rgba(0,0,0,.06);
-}
-.stat-card.featured{
-  border-left:4px solid var(--accent-primary);
-}
-@media(min-width:768px){
-  .stat-card.featured{grid-column:span 2}
-}
-@media(min-width:1024px){
-  .stat-card.featured{grid-column:span 1}
-}
-.stat-number{
-  font-family:var(--font-mono);
-  font-size:clamp(2rem,4vw,3rem);
-  font-weight:700;
-  color:var(--accent-primary);
-  line-height:1.1;
-  margin-bottom:8px;
-}
-.stat-label{
-  font-size:.95rem;
-  color:var(--text-primary);
-  line-height:1.5;
-  margin-bottom:8px;
-}
-.stat-source{
-  font-family:var(--font-mono);
-  font-size:.75rem;
-  color:var(--text-tertiary);
-}
-.quote-card{
-  background:var(--bg-card);
-  border-left:4px solid var(--accent-primary);
-  border-radius:0 12px 12px 0;
-  padding:32px;
-  margin:48px 0;
-  max-width:800px;
-}
-.quote-card blockquote{
-  font-size:1.05rem;
-  line-height:1.75;
-  color:var(--text-primary);
-  font-style:italic;
-  margin-bottom:16px;
-}
-.quote-card blockquote strong{font-style:normal;font-weight:600}
-.quote-card cite{
-  display:block;
-  font-family:var(--font-mono);
-  font-size:.8rem;
-  color:var(--text-tertiary);
-  font-style:normal;
-}
-.report-closing{
-  font-size:1.1rem;
-  color:var(--text-secondary);
-  max-width:680px;
-  line-height:1.7;
-  font-style:italic;
-  margin-top:16px;
-}
-
-/* ═══ SERVICES ═══ */
-.services-grid{
-  display:grid;
-  grid-template-columns:1fr;
-  gap:24px;
-  margin-top:48px;
-}
-@media(min-width:768px){.services-grid{grid-template-columns:1fr 1fr 1fr}}
-.service-card{
-  background:var(--bg-card);
-  border:1px solid var(--border);
-  border-radius:14px;
-  padding:36px 28px;
-  transition:transform .35s cubic-bezier(.4,0,.2,1),box-shadow .35s,border-color .3s;
-}
-.service-card:hover{
-  transform:translateY(-8px);
-  box-shadow:0 12px 40px rgba(0,0,0,.07);
-  border-color:var(--border-hover);
-}
-.service-icon{
-  width:52px;height:52px;margin-bottom:20px;
-  color:var(--accent-primary);
-}
-.service-icon svg{width:100%;height:100%}
-.service-card h3{
-  font-size:1.2rem;margin-bottom:12px;
-  letter-spacing:-.01em;
-}
-.service-card p{
-  font-size:.95rem;color:var(--text-secondary);line-height:1.65;
-}
-
-/* ═══ VISION ═══ */
-.vision-grid{
-  display:grid;
-  grid-template-columns:1fr;
-  gap:48px;
-  margin-top:48px;
-}
-@media(min-width:768px){
-  .vision-grid{
-    grid-template-columns:1fr auto 1fr;
-    gap:0;
-    align-items:center;
+  .logo { font-family: var(--mono); font-weight: 600; font-size: 16px; display: flex; align-items: center; gap: 8px; }
+  .logo .git { color: var(--text-faint); }
+  .logo .by { font-size: 11px; font-weight: 400; color: var(--text-faint); margin-left: 4px; }
+  .logo .by b { font-weight: 600; color: var(--text-dim); }
+  .nav-links { display: flex; gap: 24px; align-items: center; }
+  .nav-links a { font-size: 13.5px; color: var(--text-dim); font-weight: 500; transition: color .15s; }
+  .nav-links a:hover { color: var(--text); }
+  .nav-cta {
+    color: #fffef5 !important; background: var(--green);
+    padding: 6px 14px; border-radius: 7px; font-weight: 600 !important;
+    transition: background .15s !important;
   }
-}
-.vision-col{max-width:480px}
-@media(min-width:768px){
-  .vision-col{padding:0 40px}
-  .vision-col:first-child{justify-self:end;text-align:right}
-}
-.vision-col h3{
-  font-size:.85rem;font-weight:600;
-  color:var(--accent-primary);
-  text-transform:uppercase;
-  letter-spacing:.1em;
-  margin-bottom:16px;
-  font-family:var(--font-mono);
-}
-.vision-col p{
-  font-size:clamp(1.1rem,2vw,1.35rem);
-  line-height:1.7;
-  color:var(--text-primary);
-}
-.vision-divider{
-  width:2px;height:0;
-  background:linear-gradient(180deg,var(--accent-primary),var(--accent-warm));
-  border-radius:1px;
-  transition:height .8s cubic-bezier(.4,0,.2,1);
-  display:none;
-}
-@media(min-width:768px){.vision-divider{display:block}}
-.vision-divider.visible{height:160px}
-.vision-divider-mobile{
-  width:80px;height:2px;
-  background:linear-gradient(90deg,var(--accent-primary),var(--accent-warm));
-  border-radius:1px;
-  margin:0 auto;
-}
-@media(min-width:768px){.vision-divider-mobile{display:none}}
+  .nav-cta:hover { background: var(--green-dark); color: #fffef5 !important; }
+  @media (max-width: 720px) { .nav-links a:not(.nav-cta) { display: none; } .logo .by { display: none; } }
 
-/* ═══ ARTICLES ═══ */
-.articles{background:var(--bg-secondary)}
-.article-tabs{display:flex;gap:8px;margin:32px 0 24px;flex-wrap:wrap}
-.tab-btn{
-  padding:8px 20px;border-radius:20px;
-  border:1px solid var(--border);background:var(--bg-card);
-  color:var(--text-secondary);font-size:.875rem;font-weight:500;
-  cursor:pointer;transition:all .2s;font-family:inherit;
-}
-.tab-btn.active,.tab-btn:hover{background:var(--accent-primary);color:#fff;border-color:var(--accent-primary)}
-.tab-btn:focus-visible{outline:2px solid var(--accent-primary);outline-offset:2px}
-.article-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
-  gap:24px;
-}
-.article-card{
-  background:var(--bg-card);
-  border:1px solid var(--border);
-  border-radius:12px;
-  overflow:hidden;
-  transition:transform .3s,box-shadow .3s,border-color .3s;
-  position:relative;
-}
-.article-card:hover{
-  transform:translateY(-6px);
-  box-shadow:0 10px 30px rgba(0,0,0,.08);
-  border-color:var(--accent-secondary);
-}
-.article-card.hidden{display:none}
-.article-thumb{
-  height:150px;
-  display:flex;align-items:center;justify-content:center;
-  position:relative;overflow:hidden;
-}
-.thumb-source{
-  font-family:var(--font-display);font-size:1.6rem;font-weight:700;
-  color:rgba(255,255,255,.9);letter-spacing:.01em;text-align:center;
-  padding:0 20px;
-}
-.article-body{padding:20px}
-.article-source{
-  font-family:var(--font-mono);font-size:.72rem;
-  color:var(--accent-primary);text-transform:uppercase;
-  letter-spacing:.06em;margin-bottom:8px;
-}
-.article-card h4{font-size:1rem;line-height:1.4;margin-bottom:8px;letter-spacing:-.01em}
-.article-excerpt{font-size:.85rem;color:var(--text-secondary);line-height:1.55;margin-bottom:12px}
-.article-link{
-  font-size:.85rem;font-weight:600;color:var(--accent-primary);
-  transition:gap .2s;display:inline-flex;align-items:center;gap:4px;
-  text-decoration:none;
-}
-.article-card:hover .article-link{gap:8px}
-
-/* ═══ TEAM ═══ */
-.team-grid{
-  display:flex;
-  justify-content:center;
-  gap:32px;
-  margin-top:48px;
-  flex-wrap:wrap;
-}
-.team-card{
-  background:var(--bg-card);
-  border:1px solid var(--border);
-  border-radius:14px;
-  padding:36px 32px;
-  text-align:center;
-  width:100%;
-  max-width:320px;
-  transition:transform .35s,box-shadow .35s;
-}
-.team-card:hover{
-  transform:translateY(-6px);
-  box-shadow:0 10px 32px rgba(0,0,0,.06);
-}
-.team-avatar{
-  width:120px;height:120px;
-  margin:0 auto 20px;
-  border-radius:50%;
-  overflow:hidden;
-  background:var(--bg-secondary);
-}
-.team-avatar img{
-  width:100%;height:100%;object-fit:cover;
-}
-.team-avatar svg{
-  width:100%;height:100%;
-  animation:avatarSpin 20s linear infinite;
-}
-@keyframes avatarSpin{
-  0%{transform:rotate(0deg)}
-  100%{transform:rotate(360deg)}
-}
-.team-card h4{font-size:1.05rem;margin-bottom:4px}
-.team-card .team-title{
-  font-family:var(--font-mono);
-  font-size:.75rem;
-  color:var(--accent-primary);
-  margin-bottom:8px;
-}
-.team-card .team-bio{
-  font-size:.82rem;
-  color:var(--text-secondary);
-  line-height:1.5;
-}
-.team-card .team-location{
-  font-size:.75rem;
-  color:var(--text-tertiary);
-  margin-top:8px;
-}
-
-/* ═══ CTA / TRY US ═══ */
-.tryus{background:var(--bg-secondary)}
-.tryus-form-card{
-  background:var(--bg-card);
-  border-radius:16px;
-  padding:48px 40px;
-  max-width:600px;
-  margin:40px auto 0;
-  box-shadow:0 4px 24px rgba(0,0,0,.06);
-}
-@media(max-width:640px){
-  .tryus-form-card{padding:32px 20px}
-}
-.form-group{margin-bottom:20px}
-.form-group label{
-  display:block;
-  font-size:.875rem;
-  font-weight:500;
-  color:var(--text-primary);
-  margin-bottom:6px;
-}
-.form-group input,
-.form-group select,
-.form-group textarea{
-  width:100%;
-  padding:12px 16px;
-  border:1px solid var(--border);
-  border-radius:8px;
-  background:var(--bg-card);
-  font-size:.95rem;
-  transition:border-color .2s,box-shadow .2s;
-  outline:none;
-}
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus{
-  border-color:var(--accent-primary);
-  box-shadow:0 0 0 3px rgba(74,103,65,.1);
-}
-.form-group input:focus-visible,
-.form-group select:focus-visible,
-.form-group textarea:focus-visible{
-  outline:none;
-}
-.form-group textarea{resize:vertical;min-height:64px}
-.form-group select{
-  appearance:none;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%236b7280' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  background-repeat:no-repeat;
-  background-position:right 16px center;
-  padding-right:40px;
-}
-.btn-submit{
-  width:100%;padding:14px;border:none;border-radius:10px;
-  background:var(--accent-primary);color:#fff;
-  font-weight:600;font-size:1rem;cursor:pointer;
-  transition:background .2s,transform .15s,box-shadow .2s;
-}
-.btn-submit:hover{background:#3d5736;box-shadow:0 4px 16px rgba(74,103,65,.2)}
-.btn-submit:active{transform:scale(.98)}
-.btn-submit:focus-visible{outline:2px solid var(--accent-primary);outline-offset:3px}
-.form-trust{
-  text-align:center;
-  font-size:.85rem;
-  color:var(--text-tertiary);
-  margin-top:16px;
-}
-
-/* ═══ FOOTER ═══ */
-.site-footer{
-  padding:48px 0;
-  border-top:1px solid var(--border);
-}
-.footer-inner{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:20px;
-  text-align:center;
-}
-.footer-logo{
-  font-family:var(--font-display);font-weight:700;font-size:1.15rem;
-}
-.footer-logo span{color:var(--accent-primary)}
-.footer-tagline{font-size:.9rem;color:var(--text-secondary)}
-.footer-links{display:flex;gap:24px;flex-wrap:wrap;justify-content:center}
-.footer-links a{
-  font-size:.875rem;color:var(--text-secondary);
-  transition:color .2s;
-}
-.footer-links a:hover{color:var(--accent-primary)}
-.footer-links a:focus-visible{outline:2px solid var(--accent-primary);outline-offset:3px;border-radius:2px}
-.footer-email{
-  font-family:var(--font-mono);
-  font-size:.85rem;color:var(--text-tertiary);
-}
-.footer-copy{font-size:.8rem;color:var(--text-tertiary)}
-
-/* ═══ SCAN UI ═══ */
-.hero-headline .word.accent{color:var(--accent-primary)}
-.scan-form{margin-bottom:16px}
-.scan-input-group{display:flex;gap:12px;max-width:560px}
-.scan-input{
-  flex:1;padding:14px 18px;
-  border:1px solid var(--border);border-radius:10px;
-  font-size:1rem;background:var(--bg-card);
-  transition:border-color .2s,box-shadow .2s;outline:none;
-}
-.scan-input:focus{border-color:var(--accent-primary);box-shadow:0 0 0 3px rgba(74,103,65,.1)}
-.scan-btn{white-space:nowrap}
-.scan-hint{font-size:.85rem;color:var(--text-tertiary);margin-top:10px}
-@media(max-width:640px){.scan-input-group{flex-direction:column}}
-
-.scan-progress{max-width:480px;margin:0 auto;text-align:center}
-.scan-progress-header{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:32px}
-.scan-progress-header h2{font-size:1.3rem}
-.scan-spinner{
-  width:24px;height:24px;
-  border:3px solid var(--border);border-top-color:var(--accent-primary);
-  border-radius:50%;animation:spin .8s linear infinite;
-}
-@keyframes spin{to{transform:rotate(360deg)}}
-.progress-steps{text-align:left}
-.progress-step{
-  padding:12px 0;border-bottom:1px solid var(--border);
-  font-size:.95rem;color:var(--text-tertiary);
-  display:flex;align-items:center;gap:10px;transition:color .3s;
-}
-.progress-step.active{color:var(--accent-primary);font-weight:500}
-.progress-step.done{color:var(--text-primary)}
-.progress-step.done .step-icon{color:var(--accent-primary)}
-
-.report-header-card{margin-bottom:32px}
-.report-header-card h2{font-size:clamp(1.5rem,3vw,2rem);margin-bottom:8px}
-.report-meta{font-family:var(--font-mono);font-size:.85rem;color:var(--text-tertiary)}
-.report-summary-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:40px}
-@media(max-width:640px){.report-summary-grid{grid-template-columns:repeat(3,1fr)}}
-.summary-card{
-  background:var(--bg-card);border:1px solid var(--border);
-  border-radius:10px;padding:20px 16px;text-align:center;
-}
-.summary-card .summary-num{font-family:var(--font-mono);font-size:1.8rem;font-weight:700;line-height:1;margin-bottom:4px}
-.summary-card .summary-label{font-size:.75rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em}
-.summary-card.sev-critical .summary-num{color:#b91c1c}
-.summary-card.sev-high .summary-num{color:#c2410c}
-.summary-card.sev-medium .summary-num{color:#ca8a04}
-.summary-card.sev-low .summary-num{color:var(--accent-primary)}
-.summary-card.sev-total .summary-num{color:var(--text-primary)}
-.report-findings-list h3{font-size:1.1rem;margin-bottom:16px}
-.finding-card{
-  background:var(--bg-card);border:1px solid var(--border);
-  border-radius:10px;padding:20px;margin-bottom:12px;
-  transition:border-color .2s;
-}
-.finding-card:hover{border-color:var(--border-hover)}
-.finding-header{display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap}
-.sev-badge{
-  font-family:var(--font-mono);font-size:.7rem;font-weight:600;
-  padding:3px 8px;border-radius:4px;text-transform:uppercase;letter-spacing:.04em;
-}
-.sev-badge.critical{background:#fef2f2;color:#b91c1c}
-.sev-badge.high{background:#fff7ed;color:#c2410c}
-.sev-badge.medium{background:#fefce8;color:#ca8a04}
-.sev-badge.low{background:#f0fdf4;color:var(--accent-primary)}
-.finding-rule{font-family:var(--font-mono);font-size:.8rem;color:var(--text-secondary)}
-.finding-message{font-size:.9rem;line-height:1.55;color:var(--text-primary);margin-bottom:8px}
-.finding-location{font-family:var(--font-mono);font-size:.8rem;color:var(--text-tertiary)}
-.no-findings{text-align:center;padding:48px 24px;color:var(--text-secondary)}
-.no-findings .check-icon{font-size:3rem;margin-bottom:12px}
-.scan-error-card{
-  max-width:480px;margin:0 auto;text-align:center;
-  background:var(--bg-card);border:1px solid var(--border);
-  border-radius:12px;padding:40px;
-}
-.scan-error-card h3{margin-bottom:8px}
-.scan-error-card p{color:var(--text-secondary);font-size:.95rem}
-
-a.stat-source{display:block;transition:color .2s}
-a.stat-source:hover{color:var(--accent-primary)}
-
-.service-badge{
-  display:inline-block;font-family:var(--font-mono);font-size:.65rem;font-weight:600;
-  padding:3px 10px;border-radius:20px;background:#fef3c7;color:#92400e;
-  text-transform:uppercase;letter-spacing:.06em;margin-left:8px;vertical-align:middle;
-}
-
-a.article-link{text-decoration:none}
-
-/* ═══ REDUCED MOTION ═══ */
-@media(prefers-reduced-motion:reduce){
-  *,*::before,*::after{
-    animation-duration:.01ms !important;
-    animation-iteration-count:1 !important;
-    transition-duration:.01ms !important;
+  /* ── Hero ── */
+  .hero { position: relative; padding: 140px 0 84px; text-align: center; overflow: hidden; }
+  .hero::before {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(560px 300px at 50% -8%, rgba(90,138,80,.14), transparent 70%);
   }
-  html{scroll-behavior:auto}
-  .hero-headline .word{opacity:1;transform:none}
-  .reveal,.reveal-left,.reveal-right{opacity:1;transform:none}
-}
+  .hero-terminal {
+    position: relative;
+    max-width: 700px; margin: 0 auto 36px;
+    background: var(--term-bg);
+    border: 1px solid var(--term-border);
+    border-radius: 12px;
+    box-shadow: 0 22px 60px rgba(61,87,54,.22);
+    text-align: left;
+  }
+  .term-bar {
+    display: flex; align-items: center; gap: 7px;
+    padding: 12px 15px; border-bottom: 1px solid rgba(255,255,255,.08);
+  }
+  .term-dot { width: 11px; height: 11px; border-radius: 50%; }
+  .term-dot:nth-child(1) { background: #ff5f57; }
+  .term-dot:nth-child(2) { background: #febc2e; }
+  .term-dot:nth-child(3) { background: #28c840; }
+  .term-title { margin: 0 auto; font-family: var(--mono); font-size: 12px; color: #7d8a76; transform: translateX(-24px); }
+  .term-body {
+    padding: 32px 28px 38px;
+    font-family: var(--mono);
+    font-size: clamp(17px, 3.2vw, 25px);
+    font-weight: 500;
+    min-height: 120px;
+    color: var(--term-text);
+  }
+  .term-prompt { color: var(--term-green); margin-right: 11px; }
+  #typed { letter-spacing: -.01em; }
+  .cursor {
+    display: inline-block; width: .56em; height: 1.12em;
+    background: var(--term-green); vertical-align: text-bottom;
+    margin-left: 3px; border-radius: 1px;
+    animation: blink 1.06s step-end infinite;
+  }
+  @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+  .hero-sub { position: relative; max-width: 560px; margin: 0 auto 30px; color: var(--text-dim); font-size: 17.5px; }
+  .hero-sub strong { color: var(--text); font-weight: 600; }
+  .hero-ctas { position: relative; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center;
+    padding: 11px 22px; border-radius: 9px;
+    font-size: 14.5px; font-weight: 600;
+    transition: transform .15s, background .15s, box-shadow .15s;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn-primary { background: var(--green); color: #fffef5; }
+  .btn-primary:hover { background: var(--green-dark); box-shadow: 0 4px 20px rgba(74,103,65,.2); }
+  .btn-ghost { border: 1px solid var(--border-strong); background: var(--bg-card); color: var(--text); }
+  .btn-ghost:hover { background: var(--bg-raised); }
+
+  /* ── Section frame ── */
+  section { padding: 88px 0; }
+  .sec-head { text-align: center; max-width: 680px; margin: 0 auto 50px; }
+  .sec-tag {
+    display: inline-block; font-family: var(--mono); font-size: 12px; font-weight: 600;
+    letter-spacing: .12em; text-transform: uppercase;
+    padding: 4px 12px; border: 1px solid var(--border-strong); border-radius: 99px;
+    margin-bottom: 18px; color: var(--text-dim); background: var(--bg-card);
+  }
+  .sec-tag.part { color: #fffef5; background: var(--green); border-color: var(--green); }
+  h2 { font-size: clamp(27px, 4.2vw, 40px); font-weight: 700; letter-spacing: -.025em; line-height: 1.15; margin-bottom: 14px; }
+  .sec-lede { color: var(--text-dim); font-size: 16.5px; }
+
+  /* ── Features ── */
+  #what { padding-top: 56px; }
+  .parts { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 980px; margin: 0 auto; }
+  @media (max-width: 760px) { .parts { grid-template-columns: 1fr; } }
+  .part-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 30px 30px 26px;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .part-card:hover { border-color: var(--border-strong); box-shadow: 0 8px 30px rgba(61,87,54,.08); }
+  .part-num {
+    display: inline-block; font-family: var(--mono); font-size: 11.5px; font-weight: 600;
+    letter-spacing: .1em; text-transform: uppercase;
+    color: #fffef5; background: var(--green);
+    padding: 3px 10px; border-radius: 99px; margin-bottom: 14px;
+  }
+  .part-card:nth-child(2) .part-num { background: var(--rust); }
+  .part-card h3 { font-size: 20px; font-weight: 700; letter-spacing: -.02em; margin-bottom: 8px; }
+  .part-card > p { font-size: 14.5px; color: var(--text-dim); margin-bottom: 16px; }
+  .part-feats { list-style: none; display: flex; flex-direction: column; gap: 9px; margin-bottom: 18px; }
+  .part-feats li { display: flex; gap: 9px; align-items: baseline; font-size: 14px; color: var(--text); }
+  .part-feats li::before { content: '✓'; color: var(--green); font-weight: 700; font-size: 13px; }
+  .part-card:nth-child(2) .part-feats li::before { color: var(--rust); }
+  .part-link { font-size: 13.5px; font-weight: 600; color: var(--green); }
+  .part-card:nth-child(2) .part-link { color: var(--rust); }
+  .part-link:hover { text-decoration: underline; }
+
+  /* ── Problem: press list ── */
+  #why { border-top: 1px solid var(--border); background: var(--bg-raised); }
+  .punch {
+    max-width: 680px; margin: 0 auto 48px;
+    padding: 22px 26px;
+    border-left: 3px solid var(--rust);
+    background: var(--bg-card);
+    border-radius: 0 10px 10px 0;
+    font-size: clamp(17px, 2.4vw, 21px);
+    font-weight: 600; letter-spacing: -.01em;
+  }
+  .punch small { display: block; margin-top: 6px; font-size: 14px; font-weight: 500; color: var(--text-dim); }
+  .press { max-width: 820px; margin: 0 auto; border-top: 1px solid var(--border); }
+  .press-row {
+    display: grid; grid-template-columns: 130px 1fr 20px; gap: 18px; align-items: baseline;
+    padding: 20px 10px; border-bottom: 1px solid var(--border);
+    transition: background .15s;
+  }
+  .press-row:hover { background: var(--bg-card); }
+  .press-src { font-family: var(--mono); font-size: 12px; color: var(--rust); font-weight: 500; }
+  .press-main .press-title { font-size: 15.5px; font-weight: 600; letter-spacing: -.01em; display: block; }
+  .press-main .press-note { font-size: 13.5px; color: var(--text-dim); margin-top: 3px; display: block; }
+  .press-arrow { color: var(--text-faint); font-size: 14px; transition: color .15s, transform .15s; }
+  .press-row:hover .press-arrow { color: var(--text); transform: translate(2px,-2px); }
+  @media (max-width: 600px) { .press-row { grid-template-columns: 1fr 20px; } .press-src { grid-column: 1 / -1; } }
+
+  /* ── Part 1: terminal demo ── */
+  #git { border-top: 1px solid var(--border); }
+  .demo-term {
+    max-width: 860px; margin: 0 auto;
+    background: var(--term-bg);
+    border: 1px solid var(--term-border);
+    border-radius: 12px;
+    box-shadow: 0 20px 50px rgba(61,87,54,.18);
+  }
+  .demo-body {
+    padding: 22px 24px 26px;
+    font-family: var(--mono);
+    font-size: 13px; line-height: 1.75;
+    min-height: 430px;
+    overflow-x: auto;
+  }
+  .demo-body .t-line { display: block; white-space: pre-wrap; word-break: break-word; }
+  .demo-body .t-in { color: var(--term-text); }
+  .demo-body .t-in::before { content: '$ '; color: var(--term-green); font-weight: 600; }
+  .demo-body .t-out { color: var(--term-out); }
+  .demo-body .t-cursor::after {
+    content: ''; display: inline-block; width: 7px; height: 15px;
+    background: var(--term-green); vertical-align: text-bottom; margin-left: 2px;
+    animation: blink 1s step-end infinite;
+  }
+  .replay-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: var(--mono); font-size: 11.5px; font-weight: 500;
+    color: #a8b39e; background: transparent;
+    border: 1px solid rgba(255,255,255,.15); border-radius: 6px;
+    padding: 3px 10px; cursor: pointer; margin-left: auto;
+  }
+  .replay-btn:hover { color: var(--term-text); border-color: rgba(255,255,255,.3); }
+  .demo-note { max-width: 860px; margin: 18px auto 0; font-size: 13px; color: var(--text-faint); text-align: center; }
+
+  /* sync grid inside part 1 */
+  .sync-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center; max-width: 1000px; margin: 76px auto 0; }
+  @media (max-width: 800px) { .sync-grid { grid-template-columns: 1fr; } }
+  .sync-copy h3 { font-size: clamp(21px, 2.8vw, 27px); font-weight: 700; letter-spacing: -.02em; margin-bottom: 14px; }
+  .sync-copy p { color: var(--text-dim); font-size: 15px; margin-bottom: 14px; }
+  .sync-copy p strong { color: var(--text); font-weight: 600; }
+  .sync-fig svg { width: 100%; height: auto; display: block; }
+  .sy-label { font-family: var(--mono); font-size: 12px; fill: var(--text); text-anchor: middle; }
+  .sy-small { font-family: var(--mono); font-size: 10px; fill: var(--text-faint); text-anchor: middle; }
+  .sy-box { fill: var(--bg-card); stroke: var(--border-strong); rx: 10; }
+  .sy-relay { fill: rgba(61,107,53,.07); stroke: rgba(61,107,53,.45); rx: 10; }
+  .sy-wire { stroke: var(--border-strong); stroke-width: 1.5; fill: none; }
+
+  /* ── Part 2: scrollytelling graph ── */
+  #view { position: relative; padding: 0; border-top: 1px solid var(--border); }
+  .story-scroller { position: relative; height: 560vh; }
+  .story-stage {
+    position: sticky; top: 0; height: 100vh; height: 100svh;
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    background:
+      radial-gradient(900px 500px at 70% 20%, rgba(90,138,80,.08), transparent 70%),
+      radial-gradient(700px 400px at 20% 80%, rgba(196,168,124,.1), transparent 70%),
+      var(--bg);
+  }
+  .story-stage svg { width: 100%; height: 100%; display: block; }
+
+  .story-head {
+    position: absolute; top: 72px; left: 0; right: 0; text-align: center;
+    pointer-events: none;
+  }
+  .story-head .sec-tag { margin-bottom: 10px; }
+  .story-head h2 { font-size: clamp(22px, 3vw, 30px); margin: 0; }
+
+  .story-caption {
+    position: absolute; left: 24px; bottom: 28px; z-index: 5;
+    max-width: 420px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    border-radius: 12px;
+    padding: 18px 20px;
+    box-shadow: 0 10px 30px rgba(61,87,54,.12);
+    transition: opacity .35s;
+  }
+  .story-caption h3 { font-size: 16.5px; font-weight: 600; margin-bottom: 5px; letter-spacing: -.01em; }
+  .story-caption p { font-size: 13.5px; color: var(--text-dim); line-height: 1.55; }
+  .story-caption .cap-idx { font-family: var(--mono); font-size: 11px; color: var(--text-faint); display: block; margin-bottom: 7px; }
+  .story-hint {
+    position: absolute; right: 24px; bottom: 28px; z-index: 5;
+    font-family: var(--mono); font-size: 11.5px; color: var(--text-faint);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .story-hint .mouse { width: 15px; height: 24px; border: 1.5px solid var(--text-faint); border-radius: 8px; position: relative; }
+  .story-hint .mouse::after {
+    content: ''; position: absolute; left: 50%; top: 4px; width: 2px; height: 5px;
+    background: var(--text-faint); border-radius: 2px; transform: translateX(-50%);
+    animation: wheel 1.6s ease-in-out infinite;
+  }
+  @keyframes wheel { 0%,100% { transform: translate(-50%,0); opacity: 1; } 70% { transform: translate(-50%,7px); opacity: 0; } }
+
+  /* graph elements */
+  .g-line { stroke: var(--border); stroke-width: 3; fill: none; }
+  .g-line.lit { stroke: var(--green); }
+  .g-branch { stroke: var(--green-light); stroke-width: 2.5; fill: none; }
+  .g-node circle { fill: var(--bg-card); stroke: var(--green); stroke-width: 2.5; transition: r .3s; }
+  .g-node.decision circle { stroke: var(--rust); }
+  .g-node.branch circle { stroke: var(--green-light); }
+  .g-node text { fill: var(--text-dim); font-family: var(--mono); font-size: 15px; text-anchor: middle; }
+  .g-node .halo { fill: none; stroke-width: 1; opacity: 0; }
+  .g-node.decision .halo { stroke: var(--rust); }
+  .g-node.open-target { cursor: pointer; }
+  .g-node.open-target:hover circle:not(.halo) { r: 13; }
+  .g-abandon { stroke: var(--red); stroke-width: 2; stroke-dasharray: 6 6; fill: none; }
+  .g-label { font-family: var(--mono); font-size: 13px; fill: var(--text-faint); }
+  .g-pill rect { fill: rgba(90,138,80,.1); stroke: rgba(61,107,53,.45); rx: 12; }
+  .g-pill text { fill: var(--green); font-family: var(--mono); font-size: 13px; text-anchor: middle; }
+  .g-abox rect { fill: rgba(185,28,28,.05); stroke: rgba(185,28,28,.35); rx: 8; }
+  .g-el { opacity: 0; transition: opacity .45s; }
+  .g-el.on { opacity: 1; }
+  .pulse { animation: pulse 2.4s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
+  @keyframes pulse { 0%,100% { opacity: .15; } 50% { opacity: .8; } }
+
+  /* decision detail panel */
+  .story-detail {
+    position: absolute; right: 24px; top: 50%; transform: translateY(-50%) translateX(16px); z-index: 6;
+    width: min(430px, calc(100vw - 48px));
+    background: var(--bg-card);
+    border: 1px solid rgba(194,65,12,.45);
+    border-radius: 14px;
+    padding: 20px 22px;
+    box-shadow: 0 14px 40px rgba(61,87,54,.16);
+    opacity: 0; pointer-events: none;
+    transition: opacity .35s, transform .35s;
+    max-height: 70vh; overflow-y: auto;
+  }
+  .story-detail.open { opacity: 1; pointer-events: auto; transform: translateY(-50%) translateX(0); }
+  .story-detail .d-step { font-family: var(--mono); font-size: 12px; color: var(--rust); }
+  .story-detail .d-verdict {
+    display: inline-block; margin-left: 8px; font-family: var(--mono); font-size: 11px;
+    padding: 1px 8px; border-radius: 99px;
+  }
+  .d-verdict.abandoned { background: rgba(185,28,28,.08); color: var(--red); border: 1px solid rgba(185,28,28,.35); }
+  .d-verdict.revised { background: rgba(202,138,4,.1); color: var(--amber); border: 1px solid rgba(202,138,4,.4); }
+  .d-verdict.survived { background: rgba(61,107,53,.08); color: var(--green); border: 1px solid rgba(61,107,53,.35); }
+  .story-detail h4 { font-size: 15px; margin: 8px 0 8px; letter-spacing: -.01em; }
+  .story-detail .d-reason { font-size: 13px; color: var(--text-dim); line-height: 1.6; }
+  .story-detail .d-code {
+    margin-top: 12px; padding: 10px 12px;
+    background: var(--term-bg); border: 1px solid rgba(185,28,28,.3); border-radius: 8px;
+    font-family: var(--mono); font-size: 11.5px; color: #dca9a0; line-height: 1.6;
+    white-space: pre-wrap; word-break: break-word;
+  }
+  .story-detail .d-close {
+    position: absolute; top: 10px; right: 12px;
+    background: none; border: none; color: var(--text-faint); font-size: 18px; cursor: pointer;
+  }
+  .story-detail .d-close:hover { color: var(--text); }
+
+  /* ── Ledger explainer (part 2 continued) ── */
+  #ledger { border-top: 1px solid var(--border); background: var(--bg-raised); }
+  .ledger-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 52px; align-items: center; max-width: 1000px; margin: 0 auto; }
+  @media (max-width: 800px) { .ledger-grid { grid-template-columns: 1fr; } }
+  .ledger-copy h3 { font-size: clamp(21px, 2.8vw, 27px); font-weight: 700; letter-spacing: -.02em; margin-bottom: 14px; }
+  .ledger-copy p { color: var(--text-dim); font-size: 15px; margin-bottom: 14px; }
+  .ledger-copy p strong { color: var(--text); font-weight: 600; }
+  .ledger-example {
+    background: var(--term-bg);
+    border: 1px solid var(--term-border);
+    border-radius: 12px;
+    box-shadow: 0 16px 40px rgba(61,87,54,.16);
+    overflow: hidden;
+  }
+  .ledger-example .term-bar { border-bottom: 1px solid rgba(255,255,255,.08); }
+  .ledger-example pre {
+    padding: 18px 20px;
+    font-family: var(--mono); font-size: 12.5px; line-height: 1.9;
+    color: var(--term-out);
+    overflow-x: auto;
+  }
+  .lx-step { color: var(--term-text); font-weight: 600; }
+  .lx-abandoned { color: #e08d85; }
+  .lx-survived { color: var(--term-green); }
+  .lx-dim { color: #7d8a76; }
+
+  /* ── Footer ── */
+  footer { border-top: 1px solid var(--border); padding: 44px 0; background: var(--bg-raised); }
+  .footer-inner { display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
+  .footer-co { display: flex; flex-direction: column; gap: 3px; }
+  .footer-co .co-name { font-family: var(--mono); font-weight: 600; font-size: 15px; }
+  .footer-co .co-name .eps { color: var(--green); }
+  .footer-tag { font-size: 13px; color: var(--text-faint); }
+  .footer-links { display: flex; gap: 20px; }
+  .footer-links a { font-size: 13px; color: var(--text-dim); }
+  .footer-links a:hover { color: var(--text); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cursor, .story-hint .mouse::after, .pulse { animation: none; }
+  }
 </style>
 </head>
-
 <body>
 
-<!-- ═══ NAVIGATION ═══ -->
-<nav class="site-nav" role="navigation" aria-label="Main navigation">
+<nav>
   <div class="nav-inner">
-    <a href="#hero" class="nav-logo" aria-label="epsilonAI home"><span>ε</span>psilonAI</a>
-    <button class="hamburger" aria-label="Toggle menu" aria-expanded="false">
-      <span></span><span></span><span></span>
-    </button>
-    <div class="nav-links" role="menubar">
-      <a href="#report" class="nav-link" role="menuitem">Report</a>
-      <a href="#services" class="nav-link" role="menuitem">Services</a>
-      <a href="#vision" class="nav-link" role="menuitem">Vision</a>
-      <a href="#team" class="nav-link" role="menuitem">Team</a>
-      <button class="nav-signin" id="nav-signin" onclick="openAuthModal()">Sign In</button>
-      <div class="nav-user" id="nav-user">
-        <div class="nav-avatar-placeholder" id="nav-avatar" onclick="toggleUserDropdown()"></div>
-        <div class="user-dropdown" id="user-dropdown">
-          <div class="user-dropdown-name" id="dropdown-name"></div>
-          <div class="user-dropdown-email" id="dropdown-email"></div>
-          <button class="user-dropdown-item" onclick="handleSignOut()">Sign Out</button>
-        </div>
-      </div>
+    <a class="logo" href="#">
+      <svg width="20" height="20" viewBox="0 0 32 32" fill="none">
+        <path d="M9 16h6M15 16l4-5M15 16l4 5" stroke="#3d6b35" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="8" cy="16" r="2.4" fill="#3d6b35"/>
+        <circle cx="21" cy="9.5" r="2.4" fill="#c2410c"/>
+        <circle cx="21" cy="22.5" r="2.4" fill="#5a8a50"/>
+      </svg>
+      <span><span class="git">Git</span>TRACE</span>
+      <span class="by">by <b>epsilonAI</b></span>
+    </a>
+    <div class="nav-links">
+      <a href="#what">Overview</a>
+      <a href="#why">Why</a>
+      <a href="#git">The git</a>
+      <a href="#view">The view</a>
+      <a class="nav-cta" href="/install">Install</a>
     </div>
   </div>
 </nav>
 
-<!-- ═══ AUTH MODAL ═══ -->
-<div class="auth-modal-overlay" id="auth-modal">
-  <div class="auth-modal">
-    <button class="auth-modal-close" onclick="closeAuthModal()">&times;</button>
-    <h2 id="auth-modal-title">Sign in to epsilonAI</h2>
-    <p class="auth-subtitle" id="auth-modal-subtitle">Run security audits and access your scan history.</p>
-    <div class="auth-error" id="auth-error"></div>
-    <button class="btn-google" onclick="signInWithGoogle()">
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18A10.96 10.96 0 001 12c0 1.77.42 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
-      Continue with Google
-    </button>
-    <div class="auth-divider">or</div>
-    <form id="email-auth-form" onsubmit="handleEmailAuth(event)">
-      <input type="email" class="auth-input" id="auth-email" placeholder="Email address" required>
-      <input type="password" class="auth-input" id="auth-password" placeholder="Password" required minlength="6">
-      <button type="submit" class="btn-auth-submit" id="auth-submit-btn">Sign In</button>
-    </form>
-    <div class="auth-toggle">
-      <span id="auth-toggle-text">Don't have an account?</span>
-      <button id="auth-toggle-btn" onclick="toggleAuthMode()">Create one</button>
+<!-- Hero -->
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-terminal">
+      <div class="term-bar">
+        <span class="term-dot"></span><span class="term-dot"></span><span class="term-dot"></span>
+        <span class="term-title">bash</span>
+      </div>
+      <div class="term-body">
+        <span class="term-prompt">$</span><span id="typed"></span><span class="cursor"></span>
+      </div>
+    </div>
+    <p class="hero-sub"><strong>GitTRACE</strong> is a trace-based git from epsilonAI. Your code stays on your machines, and every change keeps the reason it happened.</p>
+    <div class="hero-ctas">
+      <a class="btn btn-primary" href="/install">Install the CLI</a>
+      <a class="btn btn-ghost" href="#what">What it is</a>
     </div>
   </div>
-</div>
+</header>
 
-<main>
-
-<!-- ═══ HERO ═══ -->
-<section id="hero" class="hero">
-  <div class="hero-bg" aria-hidden="true"></div>
-  <div class="container hero-content">
-    <h1 class="hero-headline">
-      <span class="word">Did</span>
-      <span class="word">you</span>
-      <span class="word">recently</span>
-      <span class="word">build</span>
-      <span class="word">an</span>
-      <span class="word">app?</span>
-      <br>
-      <span class="word accent">You</span>
-      <span class="word accent">sure</span>
-      <span class="word accent">it's</span>
-      <span class="word accent">secure?</span>
-    </h1>
-    <p class="hero-sub">Submit your repository for an automated security audit. Actionable results in minutes.</p>
-    <form id="scan-form" class="scan-form" aria-label="Security scan form">
-      <div class="scan-input-group">
-        <input type="url" id="scan-url" class="scan-input" placeholder="https://github.com/your/repo" aria-label="GitHub repository URL" required>
-        <button type="submit" id="scan-btn" class="btn-primary scan-btn">Scan Now →</button>
-      </div>
-      <p class="scan-hint">Public repositories only. Results in 2 to 5 minutes.</p>
-    </form>
-    <div class="hero-actions">
-      <a href="#report" class="hero-secondary">See why this matters ↓</a>
+<!-- Features -->
+<section id="what">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-tag">Overview</span>
+      <h2>Features.</h2>
+      <p class="sec-lede">GitTRACE replaces the public forge with a local, trace-recording git. And it turns that trace into a high-level view of your whole product.</p>
+    </div>
+    <div class="parts">
+      <a class="part-card" href="#git">
+        <span class="part-num">Part 1</span>
+        <h3>A new trace-based git</h3>
+        <p>Git-like version control that runs on your machines and records a trace of every change.</p>
+        <ul class="part-feats">
+          <li>Commits, branches and merges, the workflow you already know</li>
+          <li>Every step stores the written reasoning behind it</li>
+          <li>Your code is never uploaded, team sync travels encrypted</li>
+        </ul>
+        <span class="part-link">See it in the terminal &darr;</span>
+      </a>
+      <a class="part-card" href="#view">
+        <span class="part-num">Part 2</span>
+        <h3>A high-level view of your product</h3>
+        <p>The recorded trace becomes a picture of the codebase that answers questions code review cannot.</p>
+        <ul class="part-feats">
+          <li>A zoomable codegraph of your history</li>
+          <li>The decision ledger, every attempt with its verdict</li>
+          <li>Code bloat insight, see what never earned its place</li>
+        </ul>
+        <span class="part-link">Scroll the codegraph &darr;</span>
+      </a>
     </div>
   </div>
 </section>
 
-<!-- ═══ SCAN RESULTS ═══ -->
-<section id="scan-results" class="section" style="display:none">
-  <div class="container">
-    <div id="scan-progress" class="scan-progress">
-      <div class="scan-progress-header">
-        <div class="scan-spinner" aria-hidden="true"></div>
-        <h2>Scanning your repository&hellip;</h2>
-      </div>
-      <div class="progress-steps">
-        <div class="progress-step" data-step="cloning"><span class="step-icon">○</span> Cloning repository</div>
-        <div class="progress-step" data-step="detecting"><span class="step-icon">○</span> Detecting language</div>
-        <div class="progress-step" data-step="creating_db"><span class="step-icon">○</span> Building analysis database</div>
-        <div class="progress-step" data-step="analyzing"><span class="step-icon">○</span> Running security analysis</div>
-        <div class="progress-step" data-step="parsing"><span class="step-icon">○</span> Generating report</div>
-      </div>
+<!-- Problem -->
+<section id="why">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-tag">Why</span>
+      <h2>Public code is training data now.</h2>
+      <p class="sec-lede">Crawlers hit public repos around the clock. Whatever you push gets scraped and ends up in someone's training set. The reporting on this is extensive.</p>
     </div>
-    <div id="scan-report" style="display:none">
-      <div class="report-header-card">
-        <h2>Security Scan Report</h2>
-        <p id="report-meta" class="report-meta"></p>
-      </div>
-      <div id="report-summary" class="report-summary-grid"></div>
-      <div id="report-findings" class="report-findings-list"></div>
+    <div class="punch">
+      "The next training run is going to consume your value anyway."
+      <small>So keep your work where crawlers cannot reach it.</small>
     </div>
-    <div id="scan-error" style="display:none" class="scan-error-card">
-      <h3>Scan Failed</h3>
-      <p id="scan-error-msg"></p>
-      <button type="button" class="btn-primary" style="margin-top:16px" onclick="document.getElementById('scan-results').style.display='none'">Try Again</button>
-    </div>
-  </div>
-</section>
-
-<!-- ═══ REPORT ═══ -->
-<section id="report" class="section report">
-  <div class="container">
-    <div class="reveal">
-      <p class="section-label">The Problem</p>
-      <h2 class="section-title">Nearly half of AI-generated code is insecure.</h2>
-    </div>
-    <p class="report-opening reveal stagger-1">Software engineering is shifting to agentic, AI-driven development. Apps are being built in minutes by people who've never written a line of code. But the code underneath? Nearly half of it is insecure.</p>
-
-    <div class="stats-hero">
-      <div class="stat-card featured reveal stagger-1">
-        <div class="stat-number stat-counter" data-target="45" data-suffix="%">0%</div>
-        <div class="stat-label">of AI-generated code contains security vulnerabilities</div>
-        <a href="https://www.veracode.com/blog/genai-code-security-report/" target="_blank" rel="noopener" class="stat-source">Veracode 2025 GenAI Code Security Report →</a>
-      </div>
-      <div class="stat-card reveal stagger-2">
-        <div class="stat-number stat-counter" data-target="86" data-suffix="%">0%</div>
-        <div class="stat-label">failure rate on Cross-Site Scripting (XSS) defenses</div>
-        <a href="https://www.veracode.com/blog/genai-code-security-report/" target="_blank" rel="noopener" class="stat-source">Veracode 2025, CWE-80 testing →</a>
-      </div>
-      <div class="stat-card reveal stagger-3">
-        <div class="stat-number stat-counter" data-target="72" data-suffix="%">0%</div>
-        <div class="stat-label">security failure rate in AI-generated Java code</div>
-        <a href="https://www.veracode.com/blog/genai-code-security-report/" target="_blank" rel="noopener" class="stat-source">Veracode 2025 →</a>
-      </div>
-      <div class="stat-card reveal stagger-1">
-        <div class="stat-number stat-counter" data-target="2.74" data-suffix="x">0x</div>
-        <div class="stat-label">more vulnerabilities in AI-generated code vs human-written</div>
-        <a href="https://www.theregister.com/2025/12/17/ai_code_bugs/" target="_blank" rel="noopener" class="stat-source">CodeRabbit 2025 analysis →</a>
-      </div>
-      <div class="stat-card reveal stagger-2">
-        <div class="stat-number stat-counter" data-target="84" data-suffix="%">0%</div>
-        <div class="stat-label">of developers now use AI coding tools; 51% daily</div>
-        <a href="https://survey.stackoverflow.co/2025/ai" target="_blank" rel="noopener" class="stat-source">Stack Overflow 2025 Developer Survey →</a>
-      </div>
-      <div class="stat-card reveal stagger-3">
-        <div class="stat-number stat-counter" data-target="67" data-suffix="%">0%</div>
-        <div class="stat-label">of developers spend MORE time debugging AI-generated code</div>
-        <a href="https://harness.io/press-and-news/survey-ai-tools-are-increasing-amount-of-bad-code-needing-to-be-fixed" target="_blank" rel="noopener" class="stat-source">Harness 2025 Survey →</a>
-      </div>
-      <div class="stat-card reveal stagger-1">
-        <div class="stat-number stat-counter" data-target="10000" data-suffix="+" data-comma="true">0+</div>
-        <div class="stat-label">new security findings/month from AI code in Fortune 50 repos</div>
-        <a href="https://www.theregister.com/2025/09/05/ai_code_assistants_security_problems/" target="_blank" rel="noopener" class="stat-source">Apiiro Research, June 2025 →</a>
-      </div>
-      <div class="stat-card reveal stagger-2">
-        <div class="stat-number stat-counter" data-target="30" data-suffix="%+">0%+</div>
-        <div class="stat-label">of Google's new code is AI-generated</div>
-        <a href="https://www.itpro.com/software/development/google-ceo-sundar-pichai-says-vibe-coding-has-made-software-development-exciting-again-developers-might-disagree" target="_blank" rel="noopener" class="stat-source">Sundar Pichai, Google CEO →</a>
-      </div>
-      <div class="stat-card reveal stagger-3">
-        <div class="stat-number" style="font-size:clamp(1.2rem,2vw,1.5rem)">Critical</div>
-        <div class="stat-label">Prompt injection vulnerabilities discovered in Cursor, GitHub Copilot, Amazon Q, and Google Gemini AI coding tools in 2025</div>
-        <a href="https://www.pillar.security/blog/new-vulnerability-in-github-copilot-and-cursor-how-hackers-can-weaponize-code-agents" target="_blank" rel="noopener" class="stat-source">Pillar Security Research →</a>
-      </div>
-    </div>
-
-    <div class="quote-card reveal">
-      <blockquote>Google CEO Sundar Pichai acknowledged that while vibe coding is making development "exciting again," it is <strong>not suited for large, security-sensitive or mission-critical codebases.</strong> He stated: "I'm not working on large codebases where you really have to get it right, the security has to be there."</blockquote>
-      <cite>Sundar Pichai, Google for Developers Podcast, November 2025</cite>
-    </div>
-
-    <p class="report-closing reveal">"The question isn't whether people can build apps with AI. It's whether they understand what they're building. Because an app isn't just screens. It's logic, data, privacy, and trust."</p>
-  </div>
-</section>
-
-<!-- ═══ SERVICES ═══ -->
-<section id="services" class="section">
-  <div class="container">
-    <div class="reveal">
-      <p class="section-label">What We Do</p>
-      <h2 class="section-title">We find what AI misses.</h2>
-      <p class="section-desc">Comprehensive security, performance, and resilience assessments for AI-generated applications.</p>
-    </div>
-    <div class="services-grid">
-      <div class="service-card reveal stagger-1">
-        <div class="service-icon" aria-hidden="true">
-          <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M26 4L44 14V30C44 39.94 36.18 48.36 26 50C15.82 48.36 8 39.94 8 30V14L26 4Z" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" fill="none"/>
-            <line x1="16" y1="22" x2="36" y2="22" stroke="currentColor" stroke-width="1.5" opacity=".5"/>
-            <line x1="16" y1="28" x2="36" y2="28" stroke="currentColor" stroke-width="1.5" opacity=".5"/>
-            <line x1="16" y1="34" x2="32" y2="34" stroke="currentColor" stroke-width="1.5" opacity=".5"/>
-          </svg>
-        </div>
-        <h3>Security Assessment</h3>
-        <p>We scan your AI-generated codebase for OWASP Top 10 vulnerabilities, injection flaws, XSS risks, insecure dependencies, and authentication gaps. You get a prioritized remediation report.</p>
-      </div>
-      <div class="service-card reveal stagger-2">
-        <div class="service-icon" aria-hidden="true">
-          <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="26" cy="28" r="18" stroke="currentColor" stroke-width="2.5" fill="none"/>
-            <path d="M26 14V28L34 34" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-            <circle cx="26" cy="28" r="3" fill="currentColor"/>
-            <line x1="26" y1="6" x2="26" y2="10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            <line x1="14" y1="10" x2="16" y2="13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            <line x1="38" y1="10" x2="36" y2="13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-        </div>
-        <h3>Performance &amp; Efficiency <span class="service-badge">Coming Soon</span></h3>
-        <p>Is your app burning cloud spend on bloated AI-generated code? We profile runtime performance, identify redundant dependencies, and optimize your infrastructure costs. Often cutting hosting bills by 30 to 60%. <em style="color:var(--accent-warm);font-size:.85rem">Efficiency testing is currently underway.</em></p>
-      </div>
-      <div class="service-card reveal stagger-3">
-        <div class="service-icon" aria-hidden="true">
-          <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M26 4L44 14V30C44 39.94 36.18 48.36 26 50C15.82 48.36 8 39.94 8 30V14L26 4Z" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" fill="none"/>
-            <path d="M30 18L22 28H30L22 38" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
-        <h3>Attack Resilience</h3>
-        <p>We simulate real-world attack vectors like prompt injection, XSS, SQL injection, and privilege escalation against your application, then provide a hardened security posture.</p>
-      </div>
+    <div class="press">
+      <a class="press-row" href="https://www.theverge.com/2022/11/8/23446821/microsoft-openai-github-copilot-class-action-lawsuit-ai-copyright-violation-training-data" target="_blank" rel="noopener">
+        <span class="press-src">The Verge</span>
+        <span class="press-main">
+          <span class="press-title">The lawsuit that could rewrite the rules of AI copyright</span>
+          <span class="press-note">Copilot was trained on public GitHub code, including licensed code. The scale of it triggered a class action against Microsoft, GitHub and OpenAI.</span>
+        </span>
+        <span class="press-arrow">↗</span>
+      </a>
+      <a class="press-row" href="https://arstechnica.com/ai/2025/03/devs-say-ai-crawlers-dominate-traffic-forcing-blocks-on-entire-countries/" target="_blank" rel="noopener">
+        <span class="press-src">Ars Technica</span>
+        <span class="press-main">
+          <span class="press-title">AI crawlers dominate traffic, forcing blocks on entire countries</span>
+          <span class="press-note">Some open source projects now see 97 percent of their traffic coming from AI company bots. The bots spoof user agents and ignore robots.txt.</span>
+        </span>
+        <span class="press-arrow">↗</span>
+      </a>
+      <a class="press-row" href="https://techcrunch.com/2025/03/27/open-source-devs-are-fighting-ai-crawlers-with-cleverness-and-vengeance/" target="_blank" rel="noopener">
+        <span class="press-src">TechCrunch</span>
+        <span class="press-main">
+          <span class="press-title">Open source devs are fighting AI crawlers with cleverness and vengeance</span>
+          <span class="press-note">Maintainers are building proof of work walls and tarpits just to keep scrapers off their infrastructure.</span>
+        </span>
+        <span class="press-arrow">↗</span>
+      </a>
+      <a class="press-row" href="https://www.cloudflare.com/press/press-releases/2025/cloudflare-just-changed-how-ai-crawlers-scrape-the-internet-at-large/" target="_blank" rel="noopener">
+        <span class="press-src">Cloudflare</span>
+        <span class="press-main">
+          <span class="press-title">Cloudflare blocks AI crawlers by default across its network</span>
+          <span class="press-note">Scraping got so routine that the biggest infrastructure provider on the web flipped its default to deny.</span>
+        </span>
+        <span class="press-arrow">↗</span>
+      </a>
     </div>
   </div>
 </section>
 
-<!-- ═══ MISSION & VISION ═══ -->
-<section id="vision" class="section" style="background:var(--bg-secondary)">
-  <div class="container">
-    <div class="reveal" style="text-align:center;margin-bottom:16px">
-      <p class="section-label">Why We Exist</p>
+<!-- Part 1: the trace-based git -->
+<section id="git">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-tag part">Part 1</span>
+      <h2>A git that records traces.</h2>
+      <p class="sec-lede">The commands below ran against the actual CLI. Record an edit with its reasoning, read a file's story back, fork a branch. File names are simplified so the demo reads clearly.</p>
     </div>
-    <div class="vision-grid">
-      <div class="vision-col reveal-left">
-        <h3>Mission</h3>
-        <p>To make AI-built software as secure and efficient as human-engineered software. We exist because speed without safety is a liability.</p>
+    <div class="demo-term">
+      <div class="term-bar">
+        <span class="term-dot"></span><span class="term-dot"></span><span class="term-dot"></span>
+        <span class="term-title">demo</span>
+        <button class="replay-btn" id="replay">replay</button>
       </div>
-      <div class="vision-divider" aria-hidden="true"></div>
-      <div class="vision-divider-mobile reveal" aria-hidden="true"></div>
-      <div class="vision-col reveal-right">
-        <h3>Vision</h3>
-        <p>A world where anyone can build software with AI, and every app they ship is resilient, performant, and trustworthy by default.</p>
+      <div class="demo-body" id="demo-body"></div>
+    </div>
+    <p class="demo-note">Captured from a real session following the quickstart in the docs.</p>
+
+    <div class="sync-grid">
+      <div class="sync-copy">
+        <h3>The relay never sees your code.</h3>
+        <p>A push archives the trace on your machine and encrypts it to every teammate's SSH public key before anything leaves the device. The relay stores ciphertext and nothing else.</p>
+        <p>Decryption needs a private key, and private keys <strong>never leave members' laptops</strong>. A full dump of the server yields password hashes, public keys and encrypted blobs.</p>
+        <p>The scheme is the audited age format with ChaCha20-Poly1305. Every push becomes a new version, so older states stay pullable and conflicts are detected instead of overwritten.</p>
       </div>
+      <figure class="sync-fig">
+        <svg viewBox="0 0 520 300" aria-label="Encrypted sync between two laptops through a relay that stores only ciphertext">
+          <rect class="sy-box" x="20" y="110" width="120" height="80"/>
+          <text class="sy-label" x="80" y="145">your laptop</text>
+          <text class="sy-small" x="80" y="168">encrypts locally</text>
+          <rect class="sy-relay" x="200" y="95" width="120" height="110"/>
+          <text class="sy-label" x="260" y="130">relay</text>
+          <text class="sy-small" x="260" y="153">stores ciphertext</text>
+          <text class="sy-small" x="260" y="171">cannot decrypt</text>
+          <rect class="sy-box" x="380" y="110" width="120" height="80"/>
+          <text class="sy-label" x="440" y="145">teammate</text>
+          <text class="sy-small" x="440" y="168">decrypts locally</text>
+          <path class="sy-wire" d="M 140 150 H 200"/>
+          <path class="sy-wire" d="M 320 150 H 380"/>
+          <g id="packet1">
+            <rect x="-9" y="-7" width="18" height="14" rx="3" fill="rgba(61,107,53,.15)" stroke="#3d6b35" stroke-width="1.2"/>
+            <path d="M -3 -1 v -3 a 3 3 0 0 1 6 0 v 3 M -5 -1 h 10 v 7 h -10 z" fill="none" stroke="#3d6b35" stroke-width="1.1" transform="scale(.62) translate(0,-1)"/>
+          </g>
+          <g id="packet2">
+            <rect x="-9" y="-7" width="18" height="14" rx="3" fill="rgba(196,168,124,.25)" stroke="#a08050" stroke-width="1.2"/>
+            <path d="M -3 -1 v -3 a 3 3 0 0 1 6 0 v 3 M -5 -1 h 10 v 7 h -10 z" fill="none" stroke="#a08050" stroke-width="1.1" transform="scale(.62) translate(0,-1)"/>
+          </g>
+          <text class="sy-small" x="170" y="135">push</text>
+          <text class="sy-small" x="350" y="135">pull</text>
+        </svg>
+      </figure>
     </div>
   </div>
 </section>
 
-<!-- ═══ ARTICLES ═══ -->
-<section id="articles" class="section articles">
-  <div class="container">
-    <div class="reveal">
-      <p class="section-label">In the News</p>
-      <h2 class="section-title">The vibe coding security gap is real.</h2>
-      <p class="section-desc">Industry leaders and researchers are raising the alarm.</p>
-    </div>
-    <div class="article-tabs reveal stagger-1" role="tablist" aria-label="Filter articles">
-      <button class="tab-btn active" data-tab="all" role="tab" aria-selected="true">All</button>
-      <button class="tab-btn" data-tab="security" role="tab" aria-selected="false">Security Research</button>
-      <button class="tab-btn" data-tab="industry" role="tab" aria-selected="false">Industry News</button>
-    </div>
-    <div class="article-grid">
-      <article class="article-card reveal stagger-1" data-category="industry">
-        <div class="article-thumb" style="background:linear-gradient(135deg,#1a1a2e,#16213e)">
-          <span class="thumb-source">Fortune</span>
-        </div>
-        <div class="article-body">
-          <div class="article-source">Fortune · Dec 2025</div>
-          <h4>AI coding tools exploded in 2025. The first security exploits show what could go wrong</h4>
-          <p class="article-excerpt">A deep investigation into how AI-powered coding assistants introduced new attack surfaces across enterprise software.</p>
-          <a href="https://fortune.com/2025/12/15/ai-coding-tools-security-exploit-software/" target="_blank" rel="noopener" class="article-link">Read →</a>
-        </div>
-      </article>
-      <article class="article-card reveal stagger-2" data-category="security">
-        <div class="article-thumb" style="background:linear-gradient(135deg,#312e81,#4338ca)">
-          <span class="thumb-source">Veracode</span>
-        </div>
-        <div class="article-body">
-          <div class="article-source">Veracode · 2025</div>
-          <h4>45% of AI-Generated Code Contains Security Flaws</h4>
-          <p class="article-excerpt">Comprehensive testing of 100+ LLMs reveals systemic security failures in AI-generated code across all major languages.</p>
-          <a href="https://www.veracode.com/blog/genai-code-security-report/" target="_blank" rel="noopener" class="article-link">Read →</a>
-        </div>
-      </article>
-      <article class="article-card reveal stagger-3" data-category="industry">
-        <div class="article-thumb" style="background:linear-gradient(135deg,#7c2d12,#c2410c)">
-          <span class="thumb-source">The Register</span>
-        </div>
-        <div class="article-body">
-          <div class="article-source">The Register · Dec 2025</div>
-          <h4>AI-authored code needs more attention, contains worse bugs</h4>
-          <p class="article-excerpt">Researchers find that AI-generated code requires significantly more review time and contains harder-to-detect vulnerabilities.</p>
-          <a href="https://www.theregister.com/2025/12/17/ai_code_bugs/" target="_blank" rel="noopener" class="article-link">Read →</a>
-        </div>
-      </article>
-      <article class="article-card reveal stagger-1" data-category="industry">
-        <div class="article-thumb" style="background:linear-gradient(135deg,#1e3a5f,#2563eb)">
-          <span class="thumb-source">IT Pro</span>
-        </div>
-        <div class="article-body">
-          <div class="article-source">IT Pro · Nov 2025</div>
-          <h4>Google CEO says vibe coding has made software development 'exciting again'</h4>
-          <p class="article-excerpt">Sundar Pichai discusses the promise and limits of AI-assisted development, cautioning against use in critical systems.</p>
-          <a href="https://www.itpro.com/software/development/google-ceo-sundar-pichai-says-vibe-coding-has-made-software-development-exciting-again-developers-might-disagree" target="_blank" rel="noopener" class="article-link">Read →</a>
-        </div>
-      </article>
-      <article class="article-card reveal stagger-2" data-category="security">
-        <div class="article-thumb" style="background:linear-gradient(135deg,#14532d,#166534)">
-          <span class="thumb-source">Endor Labs</span>
-        </div>
-        <div class="article-body">
-          <div class="article-source">Endor Labs · Aug 2025</div>
-          <h4>The Most Common Security Vulnerabilities in AI-Generated Code</h4>
-          <p class="article-excerpt">Analysis of the top vulnerability patterns AI introduces: from injection flaws to broken access control and data exposure.</p>
-          <a href="https://www.endorlabs.com/learn/the-most-common-security-vulnerabilities-in-ai-generated-code" target="_blank" rel="noopener" class="article-link">Read →</a>
-        </div>
-      </article>
-      <article class="article-card reveal stagger-3" data-category="industry">
-        <div class="article-thumb" style="background:linear-gradient(135deg,#134e4a,#0d9488)">
-          <span class="thumb-source">Harness</span>
-        </div>
-        <div class="article-body">
-          <div class="article-source">Harness · 2025</div>
-          <h4>67% of developers spend more time debugging AI code than manual code</h4>
-          <p class="article-excerpt">Developer survey reveals the hidden costs of AI-assisted coding: increased debugging time and false confidence in output.</p>
-          <a href="https://harness.io/press-and-news/survey-ai-tools-are-increasing-amount-of-bad-code-needing-to-be-fixed" target="_blank" rel="noopener" class="article-link">Read →</a>
-        </div>
-      </article>
-      <article class="article-card reveal stagger-1" data-category="security">
-        <div class="article-thumb" style="background:linear-gradient(135deg,#1f2937,#374151)">
-          <span class="thumb-source">Pillar Security</span>
-        </div>
-        <div class="article-body">
-          <div class="article-source">Pillar Security · 2025</div>
-          <h4>Critical vulnerabilities discovered in Cursor, GitHub Copilot, Amazon Q coding tools</h4>
-          <p class="article-excerpt">Prompt injection attacks targeting popular AI coding assistants could allow malicious code execution in developer environments.</p>
-          <a href="https://www.pillar.security/blog/new-vulnerability-in-github-copilot-and-cursor-how-hackers-can-weaponize-code-agents" target="_blank" rel="noopener" class="article-link">Read →</a>
-        </div>
-      </article>
+<!-- Part 2: scrollytelling codegraph -->
+<section id="view">
+  <div class="story-scroller" id="scroller">
+    <div class="story-stage">
+      <div class="story-head">
+        <span class="sec-tag part" style="background: var(--rust); border-color: var(--rust);">Part 2</span>
+        <h2>The high-level view of your product.</h2>
+      </div>
+
+      <svg id="graph" viewBox="0 0 2000 950" preserveAspectRatio="xMidYMid meet" aria-label="A recorded development codegraph with two merged branches and abandoned attempts">
+        <!-- main line -->
+        <path id="mainline" class="g-line" d="M 80 560 H 1920"/>
+
+        <!-- branch A: feat-checkout-flow, forked at v8, steps 9 10 11, merged -->
+        <path id="branchA" class="g-branch" d="M 690 560 C 740 560 770 380 820 380 H 1080 C 1140 380 1150 560 1210 560"/>
+        <!-- branch B: feat-payment-retry, forked at v12, steps 13 14, merged -->
+        <path id="branchB" class="g-branch" d="M 1210 560 C 1255 560 1265 340 1310 340 H 1450 C 1530 340 1540 560 1620 560"/>
+
+        <!-- branch pills -->
+        <g class="g-pill g-el" data-at=".24">
+          <rect x="815" y="296" width="270" height="30"/>
+          <text x="950" y="316">feat-checkout-flow</text>
+        </g>
+        <g class="g-pill g-el" data-at=".50">
+          <rect x="1265" y="252" width="230" height="30"/>
+          <text x="1380" y="272">feat-payment-retry</text>
+        </g>
+
+        <!-- abandoned drops -->
+        <g class="g-el" data-at=".08">
+          <path class="g-abandon" d="M 170 585 V 700"/>
+          <g class="g-abox">
+            <rect x="60" y="700" width="260" height="58"/>
+            <text class="g-label" x="76" y="724" style="fill:#b91c1c">session polling loop</text>
+            <text class="g-label" x="76" y="744">abandoned at step 7</text>
+          </g>
+        </g>
+        <g class="g-el" data-at=".64">
+          <path class="g-abandon" d="M 1310 315 V 210"/>
+          <g class="g-abox">
+            <rect x="1180" y="150" width="280" height="58"/>
+            <text class="g-label" x="1196" y="174" style="fill:#b91c1c">retry constant, never wired</text>
+            <text class="g-label" x="1196" y="194">abandoned at step 14</text>
+          </g>
+        </g>
+
+        <!-- main nodes -->
+        <g class="g-node decision g-el open-target" data-at=".05" data-detail="d6" transform="translate(170,560)">
+          <circle class="halo pulse" r="20"/><circle r="10"/><text y="42">step 6</text>
+        </g>
+        <g class="g-node decision g-el open-target" data-at=".09" data-detail="d7" transform="translate(430,560)">
+          <circle class="halo pulse" r="20"/><circle r="10"/><text y="42">step 7</text>
+        </g>
+        <g class="g-node g-el" data-at=".13" transform="translate(690,560)">
+          <circle r="10"/><text y="42">step 8</text>
+        </g>
+        <g class="g-node g-el" data-at=".44" transform="translate(1210,560)">
+          <circle r="10"/><text y="42">step 12</text>
+        </g>
+        <g class="g-node g-el" data-at=".72" transform="translate(1620,560)">
+          <circle r="10"/><text y="42">step 15</text>
+        </g>
+        <g class="g-node g-el" data-at=".76" transform="translate(1830,560)">
+          <circle r="10"/><text y="42">step 16</text>
+        </g>
+
+        <!-- branch A nodes -->
+        <g class="g-node branch g-el" data-at=".30" transform="translate(820,380)">
+          <circle r="9"/><text y="-24">step 9</text>
+        </g>
+        <g class="g-node branch g-el" data-at=".34" transform="translate(950,380)">
+          <circle r="9"/><text y="-24">step 10</text>
+        </g>
+        <g class="g-node branch g-el open-target decision" data-at=".38" data-detail="d11" transform="translate(1080,380)">
+          <circle class="halo pulse" r="19"/><circle r="9"/><text y="-24">step 11</text>
+        </g>
+
+        <!-- branch B nodes -->
+        <g class="g-node branch g-el open-target decision" data-at=".56" data-detail="d13" transform="translate(1310,340)">
+          <circle class="halo pulse" r="19"/><circle r="9"/><text y="-24">step 13</text>
+        </g>
+        <g class="g-node branch g-el open-target decision" data-at=".60" data-detail="d14" transform="translate(1450,340)">
+          <circle class="halo pulse" r="19"/><circle r="9"/><text y="-24">step 14</text>
+        </g>
+
+        <!-- merge labels -->
+        <text class="g-label g-el" data-at=".44" x="1210" y="640" text-anchor="middle">merge</text>
+        <text class="g-label g-el" data-at=".72" x="1620" y="640" text-anchor="middle">merge</text>
+      </svg>
+
+      <div class="story-caption" id="caption">
+        <span class="cap-idx" id="cap-idx">1 / 5</span>
+        <h3 id="cap-title"></h3>
+        <p id="cap-text"></p>
+      </div>
+
+      <div class="story-hint"><span class="mouse"></span> scroll to zoom</div>
+
+      <aside class="story-detail" id="detail" aria-live="polite">
+        <button class="d-close" id="detail-close" aria-label="Close">×</button>
+        <div><span class="d-step" id="d-step"></span><span class="d-verdict" id="d-verdict"></span></div>
+        <h4 id="d-title"></h4>
+        <p class="d-reason" id="d-reason"></p>
+        <pre class="d-code" id="d-code" hidden></pre>
+      </aside>
     </div>
   </div>
 </section>
 
-<!-- ═══ TEAM ═══ -->
-<section id="team" class="section">
-  <div class="container">
-    <div class="reveal" style="text-align:center">
-      <p class="section-label">Who We Are</p>
-      <h2 class="section-title" style="margin:0 auto 8px">The Team Behind epsilonAI</h2>
-    </div>
-    <div class="team-grid">
-      <div class="team-card reveal stagger-1">
-        <div class="team-avatar">
-          <img src="images/barath.jpeg" alt="Barath" loading="lazy">
-        </div>
-        <h4>Barath</h4>
-        <p class="team-title">CEO &amp; Co-Founder</p>
-        <p class="team-bio">MBA. Amazon Luxembourg.</p>
-        <p class="team-location">Luxembourg</p>
+<!-- Part 2 continued: the decision ledger, explained -->
+<section id="ledger">
+  <div class="wrap">
+    <div class="ledger-grid">
+      <div class="ledger-copy">
+        <span class="sec-tag part" style="background: var(--rust); border-color: var(--rust);">Part 2</span>
+        <h3>The decision ledger, in plain words.</h3>
+        <p>Development is full of attempts that go nowhere. The ledger keeps them. Every step gets a verdict, <strong>survived</strong>, <strong>revised</strong> or <strong>abandoned</strong>, worked out from the commit record itself. Nobody has to remember to write anything down.</p>
+        <p>Six months later someone asks why <strong>payments.py</strong> retries a failed charge instead of failing fast. The answer is one command away, with the dead first attempt still attached.</p>
+        <p>The same verdicts show where bloat comes from. Code whose steps kept getting abandoned or rewritten stands out, so you can see what never earned its place in the codebase.</p>
       </div>
-      <div class="team-card reveal stagger-2">
-        <div class="team-avatar">
-          <img src="images/prateek.jpg" alt="Prateek Rajput" loading="lazy">
+      <div class="ledger-example">
+        <div class="term-bar">
+          <span class="term-dot"></span><span class="term-dot"></span><span class="term-dot"></span>
+          <span class="term-title">decision ledger</span>
         </div>
-        <h4>Prateek Rajput</h4>
-        <p class="team-title">CTO &amp; Co-Founder</p>
-        <p class="team-bio">PhD, Properties of Generated Code &amp; Agent Systems. Ex-Huawei.</p>
-        <p class="team-location">Luxembourg</p>
+        <pre><span class="lx-step">step#13  payment-retry</span>       <span class="lx-abandoned">abandoned</span>  <span class="lx-dim">replaced by step 14</span>
+  <span class="lx-dim">added a retry constant, never wired it up</span>
+
+<span class="lx-step">step#14  payment-retry-wire</span>  <span class="lx-survived">survived</span>
+  <span class="lx-dim">a failed capture now retries inside a 30s
+  window, cleared once the charge succeeds</span></pre>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ═══ TRY US ═══ -->
-<section id="tryus" class="section tryus">
-  <div class="container" style="text-align:center">
-    <div class="reveal">
-      <p class="section-label">Get Started</p>
-      <h2 class="section-title" style="margin:0 auto 8px">Get Your Free Security Snapshot</h2>
-      <p class="section-desc" style="margin:0 auto">Submit your app URL or repo. We'll send you a preliminary security and efficiency assessment within 48 hours.</p>
+<footer>
+  <div class="wrap footer-inner">
+    <div class="footer-co">
+      <span class="co-name"><span class="eps">epsilon</span>AI</span>
+      <span class="footer-tag">GitTRACE is the trace-based git from epsilonAI. Your code stays off the public internet.</span>
     </div>
-    <div class="tryus-form-card reveal stagger-1">
-      <form id="assessment-form" action="#" method="POST" aria-label="Assessment request form">
-        <div class="form-group">
-          <label for="form-name">Full Name</label>
-          <input type="text" id="form-name" name="name" required placeholder="Jane Smith" autocomplete="name">
-        </div>
-        <div class="form-group">
-          <label for="form-email">Email</label>
-          <input type="email" id="form-email" name="email" required placeholder="jane@company.com" autocomplete="email">
-        </div>
-        <div class="form-group">
-          <label for="form-url">App URL or GitHub Repo</label>
-          <input type="url" id="form-url" name="url" required placeholder="https://github.com/your/repo">
-        </div>
-        <div class="form-group">
-          <label for="form-desc">Brief Description</label>
-          <textarea id="form-desc" name="description" rows="2" placeholder="What does your app do?"></textarea>
-        </div>
-        <div class="form-group">
-          <label for="form-tool">How was your app built?</label>
-          <select id="form-tool" name="tool" required>
-            <option value="" disabled selected>Select a tool</option>
-            <option value="cursor">Cursor</option>
-            <option value="replit">Replit</option>
-            <option value="claude">Claude</option>
-            <option value="chatgpt">ChatGPT</option>
-            <option value="copilot">Copilot</option>
-            <option value="other">Other</option>
-          </select>
-        </div>
-        <button type="submit" class="btn-submit">Request Assessment →</button>
-      </form>
-      <p class="form-trust">No credit card. No commitment. Just clarity.</p>
+    <div class="footer-links">
+      <a href="#what">Overview</a>
+      <a href="#git">The git</a>
+      <a href="#view">The view</a>
+      <a href="/install">Install</a>
     </div>
-  </div>
-</section>
-
-</main>
-
-<!-- ═══ FOOTER ═══ -->
-<footer class="site-footer">
-  <div class="container footer-inner">
-    <div class="footer-logo"><span>ε</span>psilonAI</div>
-    <p class="footer-tagline">Security for the AI-built world.</p>
-    <nav class="footer-links" aria-label="Footer navigation">
-      <a href="#report">Report</a>
-      <a href="#vision">Vision</a>
-      <a href="#team">Team</a>
-      <a href="#tryus">Try Us</a>
-    </nav>
-    <a href="mailto:hello@epsilonai.com" class="footer-email">hello@epsilonai.com</a>
-    <p class="footer-copy">&copy; 2026 epsilonAI. All rights reserved.</p>
   </div>
 </footer>
 
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script>
-/* ═══ FIREBASE AUTH ═══ */
-var firebaseConfig = {
-  apiKey: 'AIzaSyBpbdU9OyuNgc4Zw5qFYXmhm6zNp_CS9Lo',
-  authDomain: 'epsilonai-29b8c.firebaseapp.com',
-  projectId: 'epsilonai-29b8c',
-  storageBucket: 'epsilonai-29b8c.firebasestorage.app',
-  messagingSenderId: '978762212854',
-  appId: '1:978762212854:web:35fc17505d36b0bb34d3d7',
-  measurementId: 'G-FEXF59DGVT'
-};
-firebase.initializeApp(firebaseConfig);
-var auth = firebase.auth();
-var currentUser = null;
-var isSignUpMode = false;
-
-function openAuthModal() {
-  document.getElementById('auth-modal').classList.add('open');
-  document.getElementById('auth-error').style.display = 'none';
-}
-function closeAuthModal() {
-  document.getElementById('auth-modal').classList.remove('open');
-  document.getElementById('auth-error').style.display = 'none';
-}
-function showAuthError(msg) {
-  var el = document.getElementById('auth-error');
-  el.textContent = msg;
-  el.style.display = 'block';
-}
-
-function signInWithGoogle() {
-  var provider = new firebase.auth.GoogleAuthProvider();
-  auth.signInWithPopup(provider).then(function() {
-    closeAuthModal();
-  }).catch(function(err) {
-    showAuthError(err.message);
-  });
-}
-
-function handleEmailAuth(e) {
-  e.preventDefault();
-  var email = document.getElementById('auth-email').value.trim();
-  var password = document.getElementById('auth-password').value;
-  var btn = document.getElementById('auth-submit-btn');
-  btn.disabled = true;
-  document.getElementById('auth-error').style.display = 'none';
-
-  var action = isSignUpMode
-    ? auth.createUserWithEmailAndPassword(email, password)
-    : auth.signInWithEmailAndPassword(email, password);
-
-  action.then(function() {
-    closeAuthModal();
-    btn.disabled = false;
-  }).catch(function(err) {
-    btn.disabled = false;
-    var msg = err.code === 'auth/user-not-found' ? 'No account found. Sign up instead.'
-            : err.code === 'auth/wrong-password'  ? 'Incorrect password.'
-            : err.code === 'auth/email-already-in-use' ? 'Email already registered. Sign in instead.'
-            : err.code === 'auth/weak-password' ? 'Password must be at least 6 characters.'
-            : err.message;
-    showAuthError(msg);
-  });
-}
-
-function toggleAuthMode() {
-  isSignUpMode = !isSignUpMode;
-  document.getElementById('auth-modal-title').textContent = isSignUpMode ? 'Create your account' : 'Sign in to epsilonAI';
-  document.getElementById('auth-submit-btn').textContent = isSignUpMode ? 'Create Account' : 'Sign In';
-  document.getElementById('auth-toggle-text').textContent = isSignUpMode ? 'Already have an account?' : "Don't have an account?";
-  document.getElementById('auth-toggle-btn').textContent = isSignUpMode ? 'Sign in' : 'Create one';
-  document.getElementById('auth-error').style.display = 'none';
-}
-
-function toggleUserDropdown() {
-  document.getElementById('user-dropdown').classList.toggle('open');
-}
-
-function handleSignOut() {
-  auth.signOut();
-  document.getElementById('user-dropdown').classList.remove('open');
-}
-
-function getInitials(name) {
-  if (!name) return '?';
-  var parts = name.split(' ');
-  return parts.length > 1 ? (parts[0][0] + parts[1][0]).toUpperCase() : name[0].toUpperCase();
-}
-
-auth.onAuthStateChanged(function(user) {
-  currentUser = user;
-  var body = document.body;
-  var avatar = document.getElementById('nav-avatar');
-  if (user) {
-    body.classList.remove('auth-signed-out');
-    body.classList.add('auth-signed-in');
-    avatar.textContent = getInitials(user.displayName || user.email);
-    document.getElementById('dropdown-name').textContent = user.displayName || 'User';
-    document.getElementById('dropdown-email').textContent = user.email;
-  } else {
-    body.classList.remove('auth-signed-in');
-    body.classList.add('auth-signed-out');
-  }
-});
-
-document.addEventListener('click', function(e) {
-  var dropdown = document.getElementById('user-dropdown');
-  var avatar = document.getElementById('nav-avatar');
-  if (!dropdown.contains(e.target) && e.target !== avatar) {
-    dropdown.classList.remove('open');
-  }
-  var modal = document.getElementById('auth-modal');
-  if (e.target === modal) closeAuthModal();
-});
-
-/* ═══ STRIPE CHECKOUT ═══ */
-var STRIPE_PK = 'pk_test_51T6cDgRqSjgrq5zxg3gsIusM0mJ9CHTOUG5q5P5et60bv0i4xYWU3i6nFfFVeLdWb8RtCh4sai0S4vEj8cJB9Tuz00R8guSapj';
-
-function createCheckout(repoUrl) {
-  var scanApi = document.querySelector('[data-scan-api]')?.dataset.scanApi
-    || (window.SCAN_API_URL)
-    || 'https://scan-service-rqkptq57eq-uc.a.run.app';
-  return fetch(scanApi + '/api/create-checkout', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      repoUrl: repoUrl,
-      userId: currentUser ? currentUser.uid : '',
-      userEmail: currentUser ? currentUser.email : ''
-    })
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(data) {
-    if (data.error) throw new Error(data.error);
-    window.location.href = data.url;
-  });
-}
-
-(function checkStripeReturn() {
-  var params = new URLSearchParams(window.location.search);
-  if (params.get('checkout') === 'success') {
-    history.replaceState(null, '', window.location.pathname);
-    setTimeout(function() {
-      var hero = document.getElementById('hero');
-      if (hero) hero.scrollIntoView({ behavior: 'smooth' });
-    }, 300);
-  } else if (params.get('checkout') === 'cancelled') {
-    history.replaceState(null, '', window.location.pathname);
-  }
-})();
-</script>
-
-<script>
-(function(){
+(function () {
   'use strict';
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  /* ═══ HERO WORD ANIMATION ═══ */
-  document.querySelectorAll('.hero-headline .word').forEach(function(w, i) {
-    w.style.animationDelay = (i * 0.09 + 0.2) + 's';
+  /* ── Hero typewriter ── */
+  const typed = document.getElementById('typed');
+  const msg = 'you still upload on github? why?';
+  if (reduced) {
+    typed.textContent = msg;
+  } else {
+    let i = 0, deleting = false;
+    (function tick() {
+      if (!deleting) {
+        typed.textContent = msg.slice(0, ++i);
+        if (i === msg.length) { deleting = true; return setTimeout(tick, 6000); }
+        return setTimeout(tick, msg[i - 1] === '?' ? 420 : 48 + Math.random() * 90);
+      }
+      typed.textContent = msg.slice(0, --i);
+      if (i === 0) { deleting = false; return setTimeout(tick, 700); }
+      return setTimeout(tick, 22);
+    })();
+  }
+
+  /* ── Scrollytelling codegraph (scrollama-style scrubbing) ── */
+  const scroller = document.getElementById('scroller');
+  const svg = document.getElementById('graph');
+  const mainline = document.getElementById('mainline');
+  const branchA = document.getElementById('branchA');
+  const branchB = document.getElementById('branchB');
+
+  // The session shape comes from a real recorded trace. File and branch
+  // names are simplified so a first-time visitor can read them.
+  const captions = [
+    { t: 'Every change is a recorded step',
+      x: 'Each node stores written reasoning next to the git range it covers. This is one recorded session, steps 6 through 16.' },
+    { t: 'Branches fork from any version',
+      x: 'feat-checkout-flow forked at version 8 and recorded three steps of its own. Main could not see it until the merge.' },
+    { t: 'Merging keeps the whole story',
+      x: 'A merge folds the branch steps and their decisions back into main. Nothing gets squashed away.' },
+    { t: 'Dead ends stay on the record',
+      x: 'Step 13 added a retry constant that never got wired up. Step 14 replaced it. Click a glowing node to read the recorded reasoning.' },
+    { t: 'All of it stays on your machines',
+      x: 'The trace lives inside your repo. Push and pull move it between teammates as encrypted blobs.' }
+  ];
+
+  // Camera keyframes as viewBox rects, one per caption.
+  const cams = [
+    [0, 280, 1150, 620],
+    [520, 160, 900, 500],
+    [560, 160, 1200, 640],
+    [1020, 60, 800, 460],
+    [0, 0, 2000, 950]
+  ];
+
+  // Reasoning shaped like the real recorded trace, with legible names.
+  const details = {
+    d6: { step: 'step#6 add-session-gate', verdict: 'abandoned', title: 'First session check, a polling loop',
+      reason: 'First attempt at the session gate. A poller asks the auth service every 300ms whether the login is still valid, and a shared global flag gates the checkout. It works but auth.py already fires an event on logout, so the polling timer and the global flag feel wrong. I will likely replace this.' },
+    d7: { step: 'step#7 session-events', verdict: 'revised', title: 'Replaced polling with events',
+      reason: 'Replaced the poller with an event hook. auth.py now ends the session the moment a logout happens. The poller and the global flag are gone. The event fires at exactly the right moment, so polling was redundant and the shared flag was fragile state.' },
+    d11: { step: 'step#11 checkout-flow', verdict: 'survived', title: 'The checkout flow lands',
+      reason: 'Wired the full checkout flow. cart.py hands off to checkout.py, a payment is captured exactly once, and a failed capture returns the cart untouched so the customer can try again.' },
+    d13: { step: 'step#13 payment-retry', verdict: 'abandoned', title: 'A constant with no wiring',
+      reason: 'Start of the retry work. A failed capture should retry before the order is marked failed. Added the retry window constant first, the actual wiring in payments.py comes next.',
+      code: '// WIP (feat-payment-retry): retry a failed capture\n// within 30s before the order is marked failed.\npayments.RETRY_WINDOW_MS = 30000;' },
+    d14: { step: 'step#14 payment-retry-wire', verdict: 'survived', title: 'The retry actually wired',
+      reason: 'The constant alone did nothing. Wired the retry into payments.py so a failed capture retries inside the window, and the timer is cleared the moment a charge succeeds so a real payment is never retried.' }
+  };
+
+  // Prepare path drawing. Each path draws over a progress range.
+  const drawRanges = [
+    { el: mainline, from: 0.00, to: 0.16 },
+    { el: branchA,  from: 0.20, to: 0.42 },
+    { el: branchB,  from: 0.48, to: 0.66 }
+  ];
+  drawRanges.forEach(d => {
+    const len = d.el.getTotalLength();
+    d.len = len;
+    d.el.style.strokeDasharray = len;
+    d.el.style.strokeDashoffset = len;
   });
 
-  /* ═══ NAVBAR SCROLL ═══ */
-  var nav = document.querySelector('.site-nav');
-  function onScroll() {
-    if (window.scrollY > 40) nav.classList.add('scrolled');
-    else nav.classList.remove('scrolled');
+  const gEls = Array.from(svg.querySelectorAll('.g-el'));
+
+  /* decision detail panel */
+  const detail = document.getElementById('detail');
+  const dStep = document.getElementById('d-step');
+  const dVerdict = document.getElementById('d-verdict');
+  const dTitle = document.getElementById('d-title');
+  const dReason = document.getElementById('d-reason');
+  const dCode = document.getElementById('d-code');
+
+  function openDetail(id) {
+    const d = details[id];
+    if (!d) return;
+    dStep.textContent = d.step;
+    dVerdict.textContent = d.verdict;
+    dVerdict.className = 'd-verdict ' + d.verdict;
+    dTitle.textContent = d.title;
+    dReason.textContent = d.reason;
+    if (d.code) { dCode.textContent = d.code; dCode.hidden = false; }
+    else dCode.hidden = true;
+    detail.classList.add('open');
   }
-  window.addEventListener('scroll', onScroll, { passive: true });
-  onScroll();
+  function closeDetail() { detail.classList.remove('open'); }
 
-  /* ═══ ACTIVE SECTION TRACKING ═══ */
-  var sections = document.querySelectorAll('section[id]');
-  var navLinks = document.querySelectorAll('.nav-link, .nav-cta');
-  var sectionObserver = new IntersectionObserver(function(entries) {
-    entries.forEach(function(entry) {
-      if (entry.isIntersecting) {
-        navLinks.forEach(function(l) { l.classList.remove('active'); });
-        var match = document.querySelector('.nav-links a[href="#' + entry.target.id + '"]');
-        if (match) match.classList.add('active');
-      }
-    });
-  }, { rootMargin: '-40% 0px -55% 0px' });
-  sections.forEach(function(s) { sectionObserver.observe(s); });
+  svg.querySelectorAll('.open-target').forEach(n => {
+    n.addEventListener('click', () => openDetail(n.dataset.detail));
+  });
+  document.getElementById('detail-close').addEventListener('click', closeDetail);
 
-  /* ═══ REVEAL ON SCROLL ═══ */
-  var revealEls = document.querySelectorAll('.reveal, .reveal-left, .reveal-right');
-  var revealObserver = new IntersectionObserver(function(entries) {
-    entries.forEach(function(entry) {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('visible');
-        revealObserver.unobserve(entry.target);
-      }
-    });
-  }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
-  revealEls.forEach(function(el) { revealObserver.observe(el); });
+  let target = cams[0].slice();
+  let current = cams[0].slice();
+  let lastStep = -1;
 
-  /* ═══ VISION DIVIDER ═══ */
-  var divider = document.querySelector('.vision-divider');
-  if (divider) {
-    var dividerObs = new IntersectionObserver(function(entries) {
-      if (entries[0].isIntersecting) {
-        divider.classList.add('visible');
-        dividerObs.unobserve(divider);
-      }
-    }, { threshold: 0.3 });
-    dividerObs.observe(divider);
+  const storyHead = document.querySelector('.story-head');
+  const capIdx = document.getElementById('cap-idx');
+  const capTitle = document.getElementById('cap-title');
+  const capText = document.getElementById('cap-text');
+  const caption = document.getElementById('caption');
+
+  function setCaption(i) {
+    if (i === lastStep) return;
+    lastStep = i;
+    caption.style.opacity = 0;
+    setTimeout(() => {
+      capIdx.textContent = (i + 1) + ' / ' + captions.length;
+      capTitle.textContent = captions[i].t;
+      capText.textContent = captions[i].x;
+      caption.style.opacity = 1;
+    }, reduced ? 0 : 180);
+    if (i === 3) openDetail('d13'); else closeDetail();
+  }
+  setCaption(0);
+
+  function progress() {
+    const r = scroller.getBoundingClientRect();
+    const total = r.height - window.innerHeight;
+    if (total <= 0) return 0;
+    return Math.min(1, Math.max(0, -r.top / total));
   }
 
-  /* ═══ STAT COUNTERS ═══ */
-  function animateCounter(el) {
-    var target = parseFloat(el.dataset.target);
-    var suffix = el.dataset.suffix || '';
-    var useComma = el.dataset.comma === 'true';
-    var isDecimal = target % 1 !== 0;
-    var duration = 1500;
-    var start = null;
-    function step(ts) {
-      if (!start) start = ts;
-      var elapsed = ts - start;
-      var progress = Math.min(elapsed / duration, 1);
-      var eased = 1 - Math.pow(1 - progress, 3);
-      var current = target * eased;
-      if (isDecimal) current = current.toFixed(2);
-      else { current = Math.floor(current); if (useComma) current = current.toLocaleString(); }
-      el.textContent = current + suffix;
-      if (progress < 1) requestAnimationFrame(step);
+  function camAt(p) {
+    // piecewise interpolation between keyframes
+    const seg = 1 / (cams.length - 1);
+    const i = Math.min(cams.length - 2, Math.floor(p / seg));
+    let t = (p - i * seg) / seg;
+    t = t * t * (3 - 2 * t); // smoothstep
+    return cams[i].map((v, k) => v + (cams[i + 1][k] - v) * t);
+  }
+
+  function update() {
+    const p = progress();
+
+    // camera
+    target = camAt(p);
+
+    // the section heading gets out of the way once the story is under way
+    storyHead.style.opacity = Math.max(0, Math.min(1, 1 - (p - 0.08) * 12));
+
+    // path drawing
+    drawRanges.forEach(d => {
+      const t = Math.min(1, Math.max(0, (p - d.from) / (d.to - d.from)));
+      d.el.style.strokeDashoffset = d.len * (1 - t);
+      d.el.classList.toggle('lit', t > 0.02);
+    });
+
+    // element visibility
+    gEls.forEach(el => {
+      el.classList.toggle('on', p >= parseFloat(el.dataset.at));
+    });
+
+    // caption step
+    setCaption(Math.min(captions.length - 1, Math.floor(p * captions.length)));
+  }
+
+  function frame() {
+    const k = reduced ? 1 : 0.09;
+    for (let i = 0; i < 4; i++) {
+      current[i] += (target[i] - current[i]) * k;
     }
-    requestAnimationFrame(step);
+    svg.setAttribute('viewBox', current.map(v => v.toFixed(1)).join(' '));
+    requestAnimationFrame(frame);
   }
-  var counters = document.querySelectorAll('.stat-counter');
-  var counterObserver = new IntersectionObserver(function(entries) {
-    entries.forEach(function(entry) {
-      if (entry.isIntersecting && !entry.target.dataset.animated) {
-        entry.target.dataset.animated = 'true';
-        animateCounter(entry.target);
-      }
-    });
-  }, { threshold: 0.5 });
-  counters.forEach(function(c) { counterObserver.observe(c); });
+  requestAnimationFrame(frame);
 
-  /* ═══ HAMBURGER MENU ═══ */
-  var hamburger = document.querySelector('.hamburger');
-  var mobileMenu = document.querySelector('.nav-links');
-  hamburger.addEventListener('click', function() {
-    var isOpen = hamburger.classList.toggle('active');
-    mobileMenu.classList.toggle('open');
-    hamburger.setAttribute('aria-expanded', isOpen);
-  });
-  mobileMenu.querySelectorAll('a').forEach(function(link) {
-    link.addEventListener('click', function() {
-      hamburger.classList.remove('active');
-      mobileMenu.classList.remove('open');
-      hamburger.setAttribute('aria-expanded', 'false');
-    });
-  });
+  window.addEventListener('scroll', update, { passive: true });
+  window.addEventListener('resize', update);
+  update();
 
-  /* ═══ FORM SUBMIT (stub) ═══ */
-  var form = document.getElementById('assessment-form');
-  form.addEventListener('submit', function(e) {
-    e.preventDefault();
-    var btn = form.querySelector('.btn-submit');
-    btn.textContent = 'Submitted! We\'ll be in touch.';
-    btn.disabled = true;
-    btn.style.background = 'var(--accent-secondary)';
-  });
+  /* ── Sync packet animation ── */
+  const p1 = document.getElementById('packet1');
+  const p2 = document.getElementById('packet2');
+  if (!reduced && p1) {
+    let t0 = performance.now();
+    (function move(now) {
+      const t = ((now - t0) / 2600) % 1;
+      const leg = (x0, x1, tt) => x0 + (x1 - x0) * tt;
+      p1.setAttribute('transform', 'translate(' + leg(140, 200, Math.min(1, t * 2)) + ',150)');
+      p1.style.opacity = t < .55 ? 1 : 0;
+      const t2 = Math.max(0, (t - .5) * 2);
+      p2.setAttribute('transform', 'translate(' + leg(320, 380, t2) + ',150)');
+      p2.style.opacity = t >= .5 ? 1 : 0;
+      requestAnimationFrame(move);
+    })(t0);
+  } else if (p1) {
+    p1.setAttribute('transform', 'translate(170,150)');
+    p2.setAttribute('transform', 'translate(350,150)');
+  }
 
-  /* ═══ ARTICLE TABS ═══ */
-  var tabBtns = document.querySelectorAll('.tab-btn');
-  var articleCards = document.querySelectorAll('.article-card[data-category]');
-  tabBtns.forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      tabBtns.forEach(function(b) { b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
-      btn.classList.add('active');
-      btn.setAttribute('aria-selected','true');
-      var tab = btn.dataset.tab;
-      articleCards.forEach(function(card) {
-        if (tab === 'all' || card.dataset.category === tab) card.classList.remove('hidden');
-        else card.classList.add('hidden');
+  /* ── Terminal replay (termynal line model) ──
+     Recorded 2026-08-10 against the real CLI in a scratch repo.
+     Output shape is verbatim, file and step names simplified for the demo. */
+  const session = [
+    { in: 'codegraph-trace record add-login --author human --reasoning "wrote login() by hand" --before 2a148af --after 384841a --repo . --no-embeddings' },
+    { out: 'Recorded human-written step add-login: 1 node link(s) across 1 changed file(s) [lineage=main].' },
+    { out: 'Locked 1 node(s) from agent overwrite.' },
+    { in: 'codegraph-trace history auth.py --repo .' },
+    { out: "Reasoning log for 'auth.py' (1 step(s)):" },
+    { out: '' },
+    { out: '1. step#1 add-login  @ 384841a190  2026-08-10T14:00:38.464418+00:00' },
+    { out: '   reasoning:' },
+    { out: '   wrote login() by hand' },
+    { out: '   objects touched:' },
+    { out: '     + added (1): auth.py [human-written, locked]' },
+    { in: 'codegraph-trace branch create feat-oauth --from 1 --repo .' },
+    { out: "Created lineage 'feat-oauth' forked from version 1 (384841a190) on git branch 'feat-oauth'." },
+    { out: "Checked out git branch 'feat-oauth'. Recorded steps will belong to this lineage." },
+    { out: "Main cannot see this lineage until it is accepted with 'codegraph-trace branch merge feat-oauth'." }
+  ];
+
+  const demoBody = document.getElementById('demo-body');
+  let playToken = 0;
+
+  function playDemo() {
+    const token = ++playToken;
+    demoBody.innerHTML = '';
+    if (reduced) {
+      session.forEach(l => {
+        const s = document.createElement('span');
+        s.className = 't-line ' + (l.in != null ? 't-in' : 't-out');
+        s.textContent = l.in != null ? l.in : l.out;
+        demoBody.appendChild(s);
       });
-    });
-  });
-
-  /* ═══ SECURITY SCAN ═══ */
-  var SCAN_API = 'https://scan-service-rqkptq57eq-uc.a.run.app';
-  window.SCAN_API_URL = SCAN_API;
-  var scanForm = document.getElementById('scan-form');
-  var scanBtn = document.getElementById('scan-btn');
-  var scanUrlInput = document.getElementById('scan-url');
-  var resultsSection = document.getElementById('scan-results');
-  var progressEl = document.getElementById('scan-progress');
-  var reportEl = document.getElementById('scan-report');
-  var errorEl = document.getElementById('scan-error');
-  var stepOrder = ['cloning', 'detecting', 'creating_db', 'analyzing', 'parsing'];
-
-  scanForm.addEventListener('submit', function(e) {
-    e.preventDefault();
-    if (!currentUser) {
-      openAuthModal();
       return;
     }
-    var url = scanUrlInput.value.trim();
-    if (!url) return;
-    startScan(url);
-  });
-
-  function startScan(repoUrl) {
-    scanBtn.disabled = true;
-    scanBtn.textContent = 'Scanning...';
-    resultsSection.style.display = '';
-    progressEl.style.display = '';
-    reportEl.style.display = 'none';
-    errorEl.style.display = 'none';
-    resetProgressSteps();
-    resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-    fetch(SCAN_API + '/api/scan', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ repoUrl: repoUrl })
-    })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      if (data.error) throw new Error(data.error);
-      pollScan(data.scanId);
-    })
-    .catch(function(err) { showScanError(err.message); });
-  }
-
-  function pollScan(scanId) {
-    fetch(SCAN_API + '/api/scan/' + scanId)
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
-        if (data.status === 'complete') {
-          updateProgressSteps('complete');
-          setTimeout(function() { showReport(data); }, 400);
-        } else if (data.status === 'error') {
-          showScanError(data.error || 'An unexpected error occurred.');
-        } else {
-          updateProgressSteps(data.status);
-          setTimeout(function() { pollScan(scanId); }, 2500);
-        }
-      })
-      .catch(function() { setTimeout(function() { pollScan(scanId); }, 3000); });
-  }
-
-  function resetProgressSteps() {
-    document.querySelectorAll('.progress-step').forEach(function(s) {
-      s.classList.remove('active', 'done');
-      s.querySelector('.step-icon').textContent = '○';
-    });
-  }
-
-  function updateProgressSteps(currentStatus) {
-    var currentIdx = stepOrder.indexOf(currentStatus);
-    document.querySelectorAll('.progress-step').forEach(function(s, i) {
-      var stepName = s.dataset.step;
-      var idx = stepOrder.indexOf(stepName);
-      if (idx < currentIdx) {
-        s.classList.add('done'); s.classList.remove('active');
-        s.querySelector('.step-icon').textContent = '✓';
-      } else if (idx === currentIdx) {
-        s.classList.add('active'); s.classList.remove('done');
-        s.querySelector('.step-icon').textContent = '●';
+    let li = 0;
+    function nextLine() {
+      if (token !== playToken) return;
+      if (li >= session.length) return;
+      const l = session[li++];
+      const s = document.createElement('span');
+      demoBody.appendChild(s);
+      if (l.in != null) {
+        s.className = 't-line t-in t-cursor';
+        let c = 0;
+        (function typeChar() {
+          if (token !== playToken) return;
+          s.textContent = l.in.slice(0, ++c);
+          if (c < l.in.length) return setTimeout(typeChar, 14 + Math.random() * 22);
+          setTimeout(() => { s.classList.remove('t-cursor'); nextLine(); }, 380);
+        })();
       } else {
-        s.classList.remove('active', 'done');
-        s.querySelector('.step-icon').textContent = '○';
+        s.className = 't-line t-out';
+        s.textContent = l.out || '\u00a0';
+        setTimeout(nextLine, 55);
       }
-    });
-  }
-
-  function showScanError(msg) {
-    scanBtn.disabled = false;
-    scanBtn.textContent = 'Scan Now →';
-    progressEl.style.display = 'none';
-    errorEl.style.display = '';
-    document.getElementById('scan-error-msg').textContent = msg;
-  }
-
-  function showReport(data) {
-    scanBtn.disabled = false;
-    scanBtn.textContent = 'Scan Now →';
-    progressEl.style.display = 'none';
-    reportEl.style.display = '';
-
-    var r = data.results;
-    var meta = (data.repoName || '') + ' · Scanned ' + new Date(data.completedAt).toLocaleDateString();
-    if (data.language) meta += ' · ' + data.language;
-    document.getElementById('report-meta').textContent = meta;
-
-    var s = r.summary;
-    document.getElementById('report-summary').innerHTML =
-      '<div class="summary-card sev-total"><div class="summary-num">' + s.total + '</div><div class="summary-label">Total</div></div>' +
-      '<div class="summary-card sev-critical"><div class="summary-num">' + s.critical + '</div><div class="summary-label">Critical</div></div>' +
-      '<div class="summary-card sev-high"><div class="summary-num">' + s.high + '</div><div class="summary-label">High</div></div>' +
-      '<div class="summary-card sev-medium"><div class="summary-num">' + s.medium + '</div><div class="summary-label">Medium</div></div>' +
-      '<div class="summary-card sev-low"><div class="summary-num">' + s.low + '</div><div class="summary-label">Low</div></div>';
-
-    var findingsEl = document.getElementById('report-findings');
-    if (r.findings.length === 0) {
-      findingsEl.innerHTML = '<div class="no-findings"><div class="check-icon">✓</div><h3>No security vulnerabilities detected</h3><p>Our analysis found no issues in the security-extended scan. This doesn\'t guarantee your app is fully secure. Consider a full manual audit for complete coverage.</p></div>';
-      return;
     }
+    nextLine();
+  }
 
-    var html = '<h3>Findings (' + r.findings.length + ')</h3>';
-    r.findings.forEach(function(f) {
-      html += '<div class="finding-card">' +
-        '<div class="finding-header">' +
-          '<span class="sev-badge ' + f.severity + '">' + f.severity + '</span>' +
-          '<span class="finding-rule">' + escHtml(f.ruleId) + '</span>' +
-        '</div>' +
-        '<div class="finding-message">' + escHtml(f.message || f.name) + '</div>' +
-        (f.file ? '<div class="finding-location">' + escHtml(f.file) + (f.line ? ':' + f.line : '') + '</div>' : '') +
-      '</div>';
+  const demoSeen = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) { playDemo(); demoSeen.disconnect(); }
     });
-    findingsEl.innerHTML = html;
-  }
-
-  function escHtml(s) {
-    var d = document.createElement('div');
-    d.textContent = s;
-    return d.innerHTML;
-  }
-
+  }, { threshold: 0.35 });
+  demoSeen.observe(demoBody);
+  document.getElementById('replay').addEventListener('click', playDemo);
 })();
 </script>
-
 </body>
 </html>

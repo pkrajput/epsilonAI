@@ -1,230 +1,58 @@
+// GitTRACE landing page server.
+// Deliberately tiny: no startup work beyond binding the port, so Render cold
+// starts are as fast as they can be.
 const express = require('express');
-const { exec } = require('child_process');
-const fs = require('fs');
 const path = require('path');
-const os = require('os');
-const crypto = require('crypto');
 
 const app = express();
-app.use(express.json());
-app.use(express.static(__dirname));
-
 const PORT = process.env.PORT || 3000;
-const scans = new Map();
-const CLOUD_SCAN_API = process.env.CLOUD_SCAN_API || 'https://scan-service-rqkptq57eq-uc.a.run.app';
-const USE_LOCAL_SCANNER = process.env.USE_LOCAL_SCANNER === '1';
 
-function isValidGitHubUrl(url) {
-  return /^https:\/\/github\.com\/[\w.-]+\/[\w.-]+/i.test(url.replace(/\/+$/, ''));
-}
+app.disable('x-powered-by');
 
-function detectLanguage(repoDir) {
-  const langMap = {
-    javascript: ['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs'],
-    python: ['.py'],
-    java: ['.java'],
-    csharp: ['.cs'],
-    go: ['.go'],
-    ruby: ['.rb'],
-    cpp: ['.cpp', '.c', '.cc', '.h', '.hpp'],
-    swift: ['.swift']
-  };
-  const counts = {};
-  function walk(dir, depth) {
-    if (depth > 8) return;
-    try {
-      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-        if (entry.name.startsWith('.') || entry.name === 'node_modules' || entry.name === 'vendor' || entry.name === '__pycache__') continue;
-        const full = path.join(dir, entry.name);
-        if (entry.isDirectory()) walk(full, depth + 1);
-        else {
-          const ext = path.extname(entry.name).toLowerCase();
-          for (const [lang, exts] of Object.entries(langMap)) {
-            if (exts.includes(ext)) counts[lang] = (counts[lang] || 0) + 1;
-          }
-        }
-      }
-    } catch (_) {}
-  }
-  walk(repoDir, 0);
-  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-  return sorted.length > 0 ? sorted[0][0] : 'javascript';
-}
-
-function execAsync(cmd, opts = {}) {
-  return new Promise((resolve, reject) => {
-    exec(cmd, { timeout: 600000, maxBuffer: 50 * 1024 * 1024, ...opts }, (err, stdout, stderr) => {
-      if (err) reject(new Error(stderr || err.message));
-      else resolve(stdout);
-    });
-  });
-}
-
-function parseSarif(sarifPath) {
-  const raw = JSON.parse(fs.readFileSync(sarifPath, 'utf8'));
-  const run = raw.runs && raw.runs[0];
-  if (!run) return { findings: [], summary: { total: 0, critical: 0, high: 0, medium: 0, low: 0 } };
-
-  const rules = {};
-  if (run.tool?.driver?.rules) {
-    for (const rule of run.tool.driver.rules) {
-      rules[rule.id] = {
-        name: rule.shortDescription?.text || rule.name || rule.id,
-        description: rule.fullDescription?.text || '',
-        severity: parseFloat(rule.properties?.['security-severity'] || '0'),
-        tags: rule.properties?.tags || []
-      };
-    }
-  }
-
-  const findings = (run.results || []).map(r => {
-    const rule = rules[r.ruleId] || {};
-    const loc = r.locations?.[0]?.physicalLocation;
-    const secSev = rule.severity || 0;
-    let severity = 'low';
-    if (secSev >= 9) severity = 'critical';
-    else if (secSev >= 7) severity = 'high';
-    else if (secSev >= 4) severity = 'medium';
-    else if (r.level === 'error') severity = 'high';
-    else if (r.level === 'warning') severity = 'medium';
-
-    return {
-      ruleId: r.ruleId,
-      name: rule.name || r.ruleId,
-      description: rule.description,
-      message: r.message?.text || '',
-      severity,
-      securitySeverity: secSev,
-      file: loc?.artifactLocation?.uri || '',
-      line: loc?.region?.startLine || 0,
-      column: loc?.region?.startColumn || 0
-    };
-  });
-
-  const sevOrder = { critical: 0, high: 1, medium: 2, low: 3 };
-  findings.sort((a, b) => sevOrder[a.severity] - sevOrder[b.severity]);
-
-  return {
-    findings,
-    summary: {
-      total: findings.length,
-      critical: findings.filter(f => f.severity === 'critical').length,
-      high: findings.filter(f => f.severity === 'high').length,
-      medium: findings.filter(f => f.severity === 'medium').length,
-      low: findings.filter(f => f.severity === 'low').length
-    }
-  };
-}
-
-app.post('/api/create-checkout', async (req, res) => {
-  try {
-    const upstream = await fetch(`${CLOUD_SCAN_API}/api/create-checkout`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(req.body || {})
-    });
-    const payload = await upstream.json();
-    return res.status(upstream.status).json(payload);
-  } catch (err) {
-    return res.status(502).json({ error: `Stripe service unavailable: ${err.message}` });
-  }
+// Lightweight health endpoint for uptime pingers (UptimeRobot, cron-job.org, …)
+// and for Render's own health checks. Does no work, allocates nothing.
+app.get('/healthz', (req, res) => {
+  res.type('text/plain').send('ok');
 });
 
-app.post('/api/scan', async (req, res) => {
-  if (!USE_LOCAL_SCANNER) {
-    try {
-      const upstream = await fetch(`${CLOUD_SCAN_API}/api/scan`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(req.body || {})
-      });
-      const payload = await upstream.json();
-      return res.status(upstream.status).json(payload);
-    } catch (err) {
-      return res.status(502).json({ error: `Upstream scan service unavailable: ${err.message}` });
-    }
-  }
-
-  const rawUrl = (req.body.repoUrl || '').trim();
-  if (!rawUrl || !isValidGitHubUrl(rawUrl)) {
-    return res.status(400).json({ error: 'Invalid GitHub URL. Use format: https://github.com/owner/repo' });
-  }
-  const scanId = crypto.randomBytes(8).toString('hex');
-  const repoUrl = rawUrl.replace(/\/+$/, '').replace(/\.git$/, '');
-  const repoName = repoUrl.replace('https://github.com/', '');
-  scans.set(scanId, { status: 'cloning', repoUrl, repoName, startedAt: new Date().toISOString() });
-  runScan(scanId, repoUrl);
-  res.json({ scanId });
+// Serve only the landing page and the install guide, never the rest of the
+// repo. Both pages are fully self-contained (inline CSS/JS/SVG).
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-app.get('/api/scan/:id', async (req, res) => {
-  if (!USE_LOCAL_SCANNER) {
-    try {
-      const upstream = await fetch(`${CLOUD_SCAN_API}/api/scan/${encodeURIComponent(req.params.id)}`);
-      const payload = await upstream.json();
-      return res.status(upstream.status).json(payload);
-    } catch (err) {
-      return res.status(502).json({ error: `Upstream scan status unavailable: ${err.message}` });
-    }
-  }
-
-  const scan = scans.get(req.params.id);
-  if (!scan) return res.status(404).json({ error: 'Scan not found' });
-  res.json(scan);
+app.get(['/install', '/install.html'], (req, res) => {
+  res.sendFile(path.join(__dirname, 'install.html'));
 });
 
-async function runScan(scanId, repoUrl) {
-  const tmpDir = path.join(os.tmpdir(), `epsilon-${scanId}`);
-  const repoDir = path.join(tmpDir, 'repo');
-  const dbDir = path.join(tmpDir, 'db');
-  const resultsFile = path.join(tmpDir, 'results.sarif');
-
-  function updateStatus(fields) {
-    scans.set(scanId, { ...scans.get(scanId), ...fields });
-  }
-
-  try {
-    fs.mkdirSync(tmpDir, { recursive: true });
-
-    updateStatus({ status: 'cloning', step: 'Cloning repository...' });
-    await execAsync(`git clone --depth 1 "${repoUrl}" "${repoDir}"`);
-
-    updateStatus({ status: 'detecting', step: 'Detecting language...' });
-    const lang = detectLanguage(repoDir);
-    updateStatus({ language: lang });
-
-    updateStatus({ status: 'creating_db', step: 'Building analysis database...' });
-    await execAsync(`codeql database create "${dbDir}" --language=${lang} --source-root="${repoDir}" --overwrite`);
-
-    updateStatus({ status: 'analyzing', step: 'Running security analysis...' });
-    const queryPack = `codeql/${lang}-queries:codeql-suites/${lang}-security-extended.qls`;
-    await execAsync(`codeql database analyze "${dbDir}" --format=sarif-latest --output="${resultsFile}" ${queryPack}`);
-
-    updateStatus({ status: 'parsing', step: 'Generating report...' });
-    const results = parseSarif(resultsFile);
-
-    updateStatus({ status: 'complete', step: 'Done', results, completedAt: new Date().toISOString() });
-  } catch (err) {
-    updateStatus({ status: 'error', step: 'Failed', error: err.message });
-  } finally {
-    try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch (_) {}
-  }
-}
-
-if (USE_LOCAL_SCANNER) exec('codeql --version', (err, stdout) => {
-  if (err) {
-    console.warn('\n  ⚠  CodeQL CLI not found. Install with: brew install --cask codeql');
-    console.warn('     Server will start but scans will fail until CodeQL is installed.\n');
-  } else {
-    console.log('  ✓ CodeQL:', stdout.split('\n')[0]);
-    const packs = ['codeql/javascript-queries', 'codeql/python-queries', 'codeql/java-queries', 'codeql/go-queries', 'codeql/ruby-queries'];
-    exec('codeql pack download ' + packs.join(' '), { timeout: 120000 }, (e2, s2) => {
-      if (!e2) console.log('  ✓ Query packs ready');
-      else console.warn('  ⚠  Could not download query packs:', e2.message.split('\n')[0]);
-    });
-  }
+// Anything else goes home.
+app.use((req, res) => {
+  res.redirect('/');
 });
 
 app.listen(PORT, () => {
-  console.log(`\n  εpsilonAI server → http://localhost:${PORT}\n`);
+  console.log(`GitTRACE site → http://localhost:${PORT}`);
 });
+
+// ── Render free-tier keep-alive ──────────────────────────────────────────────
+// Render's free tier spins instances down after ~15 minutes without traffic;
+// the next visitor then eats a slow cold start. While the instance is awake,
+// pinging our own public URL every 10 minutes resets that idle timer.
+//
+// Guarded by env vars so it never runs locally:
+//   - RENDER_EXTERNAL_URL is set automatically by Render (the public URL).
+//   - Set KEEP_ALIVE=0 to opt out (e.g. on a paid instance where it's moot).
+//
+// Limitation: a self-ping only works while the process is alive. It prevents
+// spin-down but cannot wake an instance that is already asleep. The robust fix
+// is an EXTERNAL pinger hitting /healthz every ~10 minutes (UptimeRobot or
+// cron-job.org, both free) or a paid Render instance. See README.md.
+const KEEP_ALIVE_URL = process.env.KEEP_ALIVE_URL || process.env.RENDER_EXTERNAL_URL;
+if (KEEP_ALIVE_URL && process.env.KEEP_ALIVE !== '0') {
+  const INTERVAL_MS = 10 * 60 * 1000;
+  setInterval(() => {
+    fetch(`${KEEP_ALIVE_URL.replace(/\/+$/, '')}/healthz`)
+      .catch((err) => console.warn(`keep-alive ping failed: ${err.message}`));
+  }, INTERVAL_MS).unref();
+  console.log(`keep-alive: pinging ${KEEP_ALIVE_URL}/healthz every ${INTERVAL_MS / 60000} min`);
+}

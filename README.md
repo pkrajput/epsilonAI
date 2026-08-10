@@ -1,127 +1,52 @@
-# epsilonAI
+# GitTRACE landing page
 
-Security and efficiency assessments for AI-built applications.
+Public marketing site for **GitTRACE**. The product is git-like, local-first
+version control with reasoning and decision recording, branch merging, and
+end-to-end encrypted team sync. The product source lives in `TRACER/week5`
+(internal name). Everything user-facing on the site says GitTRACE.
 
-**Live:** [www.epsilonai.eu](https://www.epsilonai.eu)
+**Hosting:** a single self-contained `index.html` served by `server.js`
+(Express) on Render.
 
-## Quick Start (local dev)
+## Local dev
 
 ```bash
 npm install
-npm start
+npm start          # → http://localhost:3000
 ```
 
-Server runs at `http://localhost:3000`.
-
-## Project Structure
+## Structure
 
 ```
-index.html              Frontend (self-contained HTML/CSS/JS)
-server.js               Local dev server (Express + scan logic)
-package.json            Dependencies for Render
-firebase.json           Firebase project config
-firestore.rules         Firestore security rules
-cloud-run/
-  index.js              Cloud Run scan service (Express + Firestore)
-  Dockerfile            Container with Node + CodeQL CLI
-  deploy.sh             One-command deploy to Cloud Run
-  package.json          Service dependencies
+index.html          The landing page (inline HTML/CSS/JS/SVG, no assets)
+install.html        The install guide, served at /install (linked from the nav)
+server.js           Tiny Express server with /healthz and a keep-alive ping
+package.json        Express only, no build step
+firebase.json       Firebase project config (used by the product's sync backend)
+firestore.rules     Firestore security rules
+cloud-run/          Legacy scan service (not used by the landing page)
 ```
 
-## Architecture
+The animated graph on the page recreates the decision tree recorded in
+`TRACER/week5/demo/game/artifacts`, and the terminal demo replays a real CLI
+session (commands and output captured verbatim).
 
-```
-[Browser]  www.epsilonai.eu
-    |
-    |  Static site (Render + GoDaddy DNS)
-    |
-    |  POST /api/scan  →  [Cloud Run]  scan-service
-    |  GET  /api/scan/:id              (scales to zero)
-    |                                       |
-    |                     Clone repo → CodeQL scan → Parse SARIF
-    |                                       |
-    |                                  [Firestore]
-    |                                  scans/{id}
-    |  ← poll status / results              |
-```
+## Render cold starts
 
-## Deploying the Scan Backend (Firebase Cloud Run)
+Render's free tier spins the instance down after about 15 minutes without
+traffic, so the first visitor afterwards waits through a cold boot. Mitigations
+in place:
 
-### Prerequisites
+1. **Fast boot.** `server.js` does nothing at startup except bind the port.
+2. **`/healthz`.** A zero-work health endpoint for uptime pingers.
+3. **In-app keep-alive.** When running on Render (detected via the
+   `RENDER_EXTERNAL_URL` env var that Render sets automatically), the server
+   pings its own `/healthz` every 10 minutes to reset the idle timer. Disable
+   with `KEEP_ALIVE=0`. It never runs locally.
 
-```bash
-# Install Google Cloud CLI if you don't have it
-brew install google-cloud-sdk
-
-# Login and set project
-gcloud auth login
-gcloud config set project epsilonai-29b8c
-
-# Enable required APIs
-gcloud services enable \
-  run.googleapis.com \
-  cloudbuild.googleapis.com \
-  firestore.googleapis.com \
-  artifactregistry.googleapis.com
-```
-
-### Create Firestore Database (one time)
-
-```bash
-gcloud firestore databases create --location=us-central1
-```
-
-### Deploy Firestore Rules
-
-```bash
-npm install -g firebase-tools
-firebase login
-firebase deploy --only firestore:rules --project epsilonai-29b8c
-```
-
-### Deploy Cloud Run
-
-```bash
-cd cloud-run
-./deploy.sh
-```
-
-This builds the Docker image (Node + CodeQL), pushes it, and deploys to Cloud Run. It prints the service URL when done.
-
-### Connect Frontend to Cloud Run
-
-After deploy, update the one line in `index.html`:
-
-```js
-var SCAN_API = 'https://scan-service-XXXXX-uc.a.run.app';
-```
-
-Push to GitHub, Render auto-deploys, done.
-
-## Cost
-
-| Component | Cost |
-|-----------|------|
-| Render (frontend) | Free tier or $7/mo |
-| GoDaddy (domain) | ~$12/yr |
-| Cloud Run | ~$0.01 per scan (scales to zero) |
-| Firestore | Negligible (free tier covers thousands of scans) |
-
-**Zero idle cost.** You only pay when someone actually scans a repo.
-
-## Scripts
-
-| Command | Description |
-|---------|-------------|
-| `npm start` | Start local dev server |
-| `npm run dev` | Same as start |
-| `cd cloud-run && ./deploy.sh` | Deploy scan backend |
-
-## Tech Stack
-
-- Node.js / Express
-- CodeQL CLI (security analysis engine)
-- Firebase Cloud Run + Firestore
-- Render (frontend hosting)
-- GoDaddy (DNS)
-- Vanilla HTML, CSS, JavaScript
+**Remaining manual step (recommended):** an in-app self-ping cannot wake an
+instance that has already spun down, for example after a deploy or a crash.
+For a fully robust fix, point a free external pinger at the health endpoint.
+[UptimeRobot](https://uptimerobot.com) or [cron-job.org](https://cron-job.org)
+hitting `https://<your-render-url>/healthz` every 10 minutes works. A paid
+Render instance never spins down and needs none of this.
