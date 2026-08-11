@@ -1,0 +1,211 @@
+/* GitTRACE — the autonomous-company vision, as a click-through window.
+   Uses the :root palette from the page. Same visual family as the
+   decision-map section: cream stage, card captions, rust decision rings.
+   The pull highlight is the panel's amber, in the site's tone. */
+
+/* ── the window: one framed card, Next/Back inside ── */
+.cgs-window {
+  position: relative;
+  max-width: 1104px;
+  margin: 0 auto;
+  height: min(72vh, 640px);
+  border: 1px solid var(--border-strong);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 18px 50px rgba(61,87,54,.12);
+  background:
+    radial-gradient(900px 520px at 22% 18%, rgba(90,138,80,.09), transparent 70%),
+    radial-gradient(760px 460px at 82% 82%, rgba(196,168,124,.10), transparent 70%),
+    var(--bg);
+}
+
+.cgs-mount { position: absolute; inset: 14px 0 0 0; }
+.cgs-mount svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+/* ── graph elements ── */
+.cgs-el { opacity: 0; transition: opacity .5s ease; }
+.cgs-el.on { opacity: 1; }
+
+.cgs-file rect.box {
+  fill: var(--bg-card); stroke: var(--border-strong); stroke-width: 1.6;
+  transition: fill .7s ease, stroke .7s ease, filter .7s ease;
+}
+.cgs-file text.fname {
+  font-family: var(--mono); font-size: 16px; font-weight: 600;
+  fill: var(--green-dark); text-anchor: middle;
+}
+.cgs-file.humans text.fname, .cgs-file.hub text.fname { fill: var(--text-dim); }
+.cgs-openfile { cursor: pointer; }
+.cgs-openfile:hover rect.box { stroke: var(--green); }
+
+.cgs-sym circle.dot {
+  fill: var(--bg-card); stroke: var(--green-light); stroke-width: 2.2;
+  transition: stroke .7s ease;
+}
+.cgs-sym.anon circle.dot { stroke-width: 1.7; }
+.cgs-sym.human circle.dot { stroke: #b09468; }
+.cgs-sym text {
+  font-family: var(--mono); font-size: 13px;
+  fill: var(--text-dim); text-anchor: middle;
+}
+.cgs-sym .halo { fill: none; stroke-width: 1.4; opacity: 0; }
+.cgs-sym.decision circle.dot { stroke: var(--rust); }
+.cgs-sym.decision .halo { stroke: var(--rust); animation: cgs-pulse 2.4s ease-in-out infinite; }
+.cgs-sym.decision, .cgs-openreview { cursor: pointer; }
+.cgs-sym.decision:hover circle.dot { stroke-width: 3.4; }
+@keyframes cgs-pulse { 0%, 100% { opacity: .15; } 50% { opacity: .8; } }
+
+/* alive: each dot pulses on its own clock (durations set inline in JS).
+   Opacity only, so the whole crowd stays cheap to paint. */
+.cgs-breathe { animation: cgs-breathe 4s ease-in-out infinite; }
+@keyframes cgs-breathe {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .45; }
+}
+
+.cgs-mesh { stroke: var(--border); stroke-width: 1.1; opacity: .85; }
+
+.cgs-edge {
+  fill: none; stroke: var(--border-strong); stroke-width: 2.4;
+  stroke-linecap: round; transition: stroke .5s ease;
+}
+.cgs-edge.lit { stroke: var(--green); }
+
+.cgs-pill rect { fill: rgba(90,138,80,.1); stroke: rgba(61,107,53,.45); rx: 16; }
+.cgs-pill text { fill: var(--green); font-family: var(--mono); font-size: 14px; text-anchor: middle; }
+
+/* ── the pull highlight: the product's amber, on cream ── */
+.cgs-file.glow rect.box {
+  fill: rgba(202,138,4,.16); stroke: var(--amber); stroke-width: 3;
+  filter: drop-shadow(0 0 18px rgba(202,138,4,.5));
+}
+.cgs-sym.glow circle.dot { stroke: var(--amber); }
+.cgs-sym.glow .halo {
+  stroke: var(--amber); stroke-width: 2;
+  animation: cgs-glowpulse 2.2s ease-in-out infinite;
+}
+@keyframes cgs-glowpulse { 0%, 100% { opacity: .35; } 50% { opacity: .95; } }
+
+/* ── caption card (mirrors .story-caption) ── */
+.cgs-caption {
+  position: absolute; left: 16px; bottom: 16px; z-index: 5;
+  max-width: 320px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  padding: 12px 14px;
+  box-shadow: 0 10px 30px rgba(61,87,54,.12);
+  transition: opacity .35s;
+}
+.cgs-caption h3 { font-size: 13.75px; font-weight: 600; margin-bottom: 3px; letter-spacing: -.01em; }
+.cgs-caption p { font-size: 12px; color: var(--text-dim); line-height: 1.45; }
+.cgs-caption .cap-idx { font-family: var(--mono); font-size: 10.5px; color: var(--text-faint); display: block; margin-bottom: 5px; }
+
+/* ── Next / Back: round green arrows, centered at the bottom ── */
+.cgs-controls {
+  position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 8;
+  display: flex; gap: 12px; align-items: center;
+}
+.cgs-controls button {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--green); color: #fffef5; border: 1px solid var(--green);
+  font-family: var(--mono); font-size: 18px; font-weight: 600; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; padding: 0;
+  box-shadow: 0 6px 18px rgba(61,107,53,.25);
+  transition: background .15s, opacity .15s, transform .15s;
+}
+.cgs-controls button:hover:not(:disabled) { background: var(--green-dark); transform: translateY(-1px); }
+.cgs-controls button:disabled { opacity: .35; cursor: default; box-shadow: none; }
+
+/* ── drawer: ledger + review (same family as .story-detail) ── */
+.cgs-detail {
+  position: absolute; right: 16px; top: 42%; transform: translateY(-50%) translateX(16px); z-index: 7;
+  width: min(400px, calc(100% - 32px));
+  background: var(--bg-card);
+  border: 1px solid rgba(194,65,12,.45);
+  border-radius: 14px;
+  padding: 20px 22px;
+  box-shadow: 0 14px 40px rgba(61,87,54,.16);
+  opacity: 0; pointer-events: none;
+  transition: opacity .35s, transform .35s, border-color .35s;
+  max-height: 60%; overflow-y: auto;
+}
+.cgs-detail.open { opacity: 1; pointer-events: auto; transform: translateY(-50%) translateX(0); }
+.cgs-detail.cgs-review { border-color: rgba(202,138,4,.55); }
+.cgs-detail .d-step { font-family: var(--mono); font-size: 12px; color: var(--rust); }
+.cgs-detail.cgs-review .d-step { color: var(--amber); }
+.cgs-detail h4 { font-size: 13.5px; margin: 6px 0 6px; letter-spacing: -.01em; }
+.cgs-detail .d-reason { font-size: 12px; color: var(--text-dim); line-height: 1.5; }
+.cgs-detail .d-code {
+  margin-top: 10px; padding: 9px 11px;
+  background: var(--term-bg); border: 1px solid rgba(185,28,28,.3); border-radius: 8px;
+  font-family: var(--mono); font-size: 11px; color: #dca9a0; line-height: 1.55;
+  white-space: pre-wrap; word-break: break-word;
+}
+.cgs-detail .d-close {
+  position: absolute; top: 10px; right: 12px;
+  background: none; border: none; color: var(--text-faint); font-size: 18px; cursor: pointer;
+}
+.cgs-detail .d-close:hover { color: var(--text); }
+.d-verdict.pending { background: rgba(202,138,4,.1); color: var(--amber); border: 1px solid rgba(202,138,4,.4); }
+
+.cgs-diff {
+  margin-top: 10px; padding: 9px 11px;
+  background: var(--term-bg); border: 1px solid rgba(202,138,4,.35); border-radius: 8px;
+  font-family: var(--mono); font-size: 11px; line-height: 1.6;
+  white-space: pre-wrap; word-break: break-word;
+}
+.cgs-diff span { display: block; }
+.cgs-diff .del { color: #dca9a0; }
+.cgs-diff .ins { color: #8fbf7f; }
+
+.cgs-actions { display: flex; gap: 10px; margin-top: 14px; }
+.cgs-actions button {
+  font-family: var(--sans); font-size: 13px; font-weight: 600;
+  padding: 7px 16px; border-radius: 8px; cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.cgs-accept { background: var(--green); color: #fffef5; border: 1px solid var(--green); }
+.cgs-accept:hover { background: var(--green-dark); }
+.cgs-reject { background: transparent; color: var(--rust); border: 1px solid rgba(194,65,12,.5); }
+.cgs-reject:hover { background: rgba(194,65,12,.06); }
+
+/* ── the pull terminal at the side ── */
+.cgs-term {
+  position: absolute; right: 16px; bottom: 16px; z-index: 6;
+  width: min(400px, calc(100% - 32px));
+  opacity: 0; pointer-events: none;
+  transform: translateY(14px);
+  transition: opacity .4s, transform .4s;
+}
+.cgs-term.show { opacity: 1; pointer-events: auto; transform: translateY(0); }
+.cgs-term-body {
+  padding: 14px 16px 16px;
+  font-family: var(--mono); font-size: 12px; line-height: 1.65;
+  min-height: 140px; color: var(--term-text);
+}
+.cgs-t-line { display: block; white-space: pre-wrap; word-break: break-word; }
+.cgs-t-note { color: #e0b34a; font-style: italic; }
+.cgs-t-in .p { color: var(--term-green); font-weight: 600; }
+.cgs-t-ok { color: var(--term-green); }
+.cgs-t-out { color: var(--term-out); }
+.cgs-t-cursor::after {
+  content: ''; display: inline-block; width: 7px; height: 15px;
+  background: var(--term-green); vertical-align: text-bottom; margin-left: 2px;
+  animation: cgs-blink 1s step-end infinite;
+}
+@keyframes cgs-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+@media (max-width: 760px) {
+  .cgs-window { height: min(66vh, 560px); border-radius: 12px; }
+  .cgs-caption { max-width: calc(100% - 32px); padding: 11px 12px; bottom: 76px; }
+  .cgs-term { bottom: auto; top: 14px; }
+  .cgs-detail { top: 50%; max-height: 52%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cgs-el, .cgs-caption, .cgs-term, .cgs-detail { transition: none; }
+  .cgs-breathe, .cgs-sym.decision .halo, .cgs-sym.glow .halo, .cgs-t-cursor::after { animation: none; }
+  .cgs-sym.glow .halo { opacity: .8; }
+}

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GitTRACE by epsilonAI</title>
-<meta name="description" content="GitTRACE is a trace-based git from epsilonAI. Local version control that records why every change happened, plus a high-level view of your product with a decision ledger and a zoomable codegraph.">
+<meta name="description" content="GitTRACE is a trace-based git from epsilonAI. Local version control that records why every change happened, plus a high-level view of your product with a decision ledger.">
 <meta property="og:title" content="GitTRACE by epsilonAI">
 <meta property="og:description" content="A trace-based git that keeps your code off the public internet, and a high-level view of your product built from the recorded trace.">
 <meta property="og:type" content="website">
@@ -12,6 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/collab-graph.css">
 <style>
   /*
     Palette recovered from the previous epsilonAI site (git history of index.html).
@@ -125,8 +126,10 @@
     animation: blink 1.06s step-end infinite;
   }
   @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
-  .hero-sub { position: relative; max-width: 560px; margin: 0 auto 30px; color: var(--text-dim); font-size: 17.5px; }
+  .hero-sub { position: relative; max-width: 560px; margin: 0 auto 18px; color: var(--text-dim); font-size: 17.5px; }
   .hero-sub strong { color: var(--text); font-weight: 600; }
+  .hero-tags { position: relative; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 0 auto 28px; }
+  .hero-tags .sec-tag { margin-bottom: 0; text-transform: none; letter-spacing: .04em; }
   .hero-ctas { position: relative; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
   .btn {
     display: inline-flex; align-items: center;
@@ -149,7 +152,6 @@
     padding: 4px 12px; border: 1px solid var(--border-strong); border-radius: 99px;
     margin-bottom: 18px; color: var(--text-dim); background: var(--bg-card);
   }
-  .sec-tag.part { color: #fffef5; background: var(--green); border-color: var(--green); }
   h2 { font-size: clamp(27px, 4.2vw, 40px); font-weight: 700; letter-spacing: -.025em; line-height: 1.15; margin-bottom: 14px; }
   .sec-lede { color: var(--text-dim); font-size: 16.5px; }
 
@@ -165,13 +167,6 @@
     transition: border-color .2s, box-shadow .2s;
   }
   .part-card:hover { border-color: var(--border-strong); box-shadow: 0 8px 30px rgba(61,87,54,.08); }
-  .part-num {
-    display: inline-block; font-family: var(--mono); font-size: 11.5px; font-weight: 600;
-    letter-spacing: .1em; text-transform: uppercase;
-    color: #fffef5; background: var(--green);
-    padding: 3px 10px; border-radius: 99px; margin-bottom: 14px;
-  }
-  .part-card:nth-child(2) .part-num { background: var(--rust); }
   .part-card h3 { font-size: 20px; font-weight: 700; letter-spacing: -.02em; margin-bottom: 8px; }
   .part-card > p { font-size: 14.5px; color: var(--text-dim); margin-bottom: 16px; }
   .part-feats { list-style: none; display: flex; flex-direction: column; gap: 9px; margin-bottom: 18px; }
@@ -181,53 +176,71 @@
   .part-link { font-size: 13.5px; font-weight: 600; color: var(--green); }
   .part-card:nth-child(2) .part-link { color: var(--rust); }
   .part-link:hover { text-decoration: underline; }
-
-  /* ── Problem: press list ── */
-  #why { border-top: 1px solid var(--border); background: var(--bg-raised); }
-  .punch {
-    max-width: 680px; margin: 0 auto 48px;
-    padding: 22px 26px;
-    border-left: 3px solid var(--rust);
-    background: var(--bg-card);
-    border-radius: 0 10px 10px 0;
-    font-size: clamp(17px, 2.4vw, 21px);
-    font-weight: 600; letter-spacing: -.01em;
+  /* ── Agentic collaboration (full-page block) ── */
+  #collab {
+    border-top: 1px solid var(--border);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
-  .punch small { display: block; margin-top: 6px; font-size: 14px; font-weight: 500; color: var(--text-dim); }
-  .press { max-width: 820px; margin: 0 auto; border-top: 1px solid var(--border); }
-  .press-row {
-    display: grid; grid-template-columns: 130px 1fr 20px; gap: 18px; align-items: baseline;
-    padding: 20px 10px; border-bottom: 1px solid var(--border);
-    transition: background .15s;
+  #collab > .wrap { width: 100%; }
+  .collab-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.25fr;
+    gap: 28px;
+    align-items: stretch;
   }
-  .press-row:hover { background: var(--bg-card); }
-  .press-src { font-family: var(--mono); font-size: 12px; color: var(--rust); font-weight: 500; }
-  .press-main .press-title { font-size: 15.5px; font-weight: 600; letter-spacing: -.01em; display: block; }
-  .press-main .press-note { font-size: 13.5px; color: var(--text-dim); margin-top: 3px; display: block; }
-  .press-arrow { color: var(--text-faint); font-size: 14px; transition: color .15s, transform .15s; }
-  .press-row:hover .press-arrow { color: var(--text); transform: translate(2px,-2px); }
-  @media (max-width: 600px) { .press-row { grid-template-columns: 1fr 20px; } .press-src { grid-column: 1 / -1; } }
-
-  /* ── Part 1: terminal demo ── */
-  #git { border-top: 1px solid var(--border); }
+  @media (max-width: 900px) { .collab-grid { grid-template-columns: 1fr; } }
+  .collab-grid.no-graph { grid-template-columns: 1fr; max-width: 800px; margin: 0 auto; }
+  .collab-grid.no-graph > div:last-child { display: none; }
+  .collab-grid > div:last-child {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .fig-cap {
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--text-faint);
+    line-height: 1.45;
+  }
+  .collab-grid > div:last-child .fig-cap { flex: none; }
+  #collab-graph {
+    flex: 1;
+    width: 100%;
+    min-height: 480px;
+    overflow: visible;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #collab-graph > * { width: 100%; }
+  @media (max-width: 900px) { #collab-graph { min-height: 340px; } }
   .demo-term {
-    max-width: 860px; margin: 0 auto;
     background: var(--term-bg);
     border: 1px solid var(--term-border);
     border-radius: 12px;
     box-shadow: 0 20px 50px rgba(61,87,54,.18);
   }
   .demo-body {
-    padding: 22px 24px 26px;
+    padding: 20px 22px 24px;
     font-family: var(--mono);
-    font-size: 13px; line-height: 1.75;
-    min-height: 430px;
+    font-size: 12.5px; line-height: 1.8;
+    min-height: 440px;
     overflow-x: auto;
   }
   .demo-body .t-line { display: block; white-space: pre-wrap; word-break: break-word; }
+  .demo-body .t-who {
+    display: inline-block; width: 74px; font-weight: 600; letter-spacing: .02em;
+  }
+  .demo-body .t-who.pm { color: var(--term-green); }
+  .demo-body .t-who.a1 { color: #e0b34a; }
+  .demo-body .t-who.a2 { color: #dca9a0; }
   .demo-body .t-in { color: var(--term-text); }
-  .demo-body .t-in::before { content: '$ '; color: var(--term-green); font-weight: 600; }
+  .demo-body .t-in .t-prompt { color: var(--term-green); font-weight: 600; }
   .demo-body .t-out { color: var(--term-out); }
+  .demo-body .t-note { color: #7d8a76; font-style: italic; }
   .demo-body .t-cursor::after {
     content: ''; display: inline-block; width: 7px; height: 15px;
     background: var(--term-green); vertical-align: text-bottom; margin-left: 2px;
@@ -241,23 +254,12 @@
     padding: 3px 10px; cursor: pointer; margin-left: auto;
   }
   .replay-btn:hover { color: var(--term-text); border-color: rgba(255,255,255,.3); }
-  .demo-note { max-width: 860px; margin: 18px auto 0; font-size: 13px; color: var(--text-faint); text-align: center; }
 
-  /* sync grid inside part 1 */
-  .sync-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center; max-width: 1000px; margin: 76px auto 0; }
-  @media (max-width: 800px) { .sync-grid { grid-template-columns: 1fr; } }
-  .sync-copy h3 { font-size: clamp(21px, 2.8vw, 27px); font-weight: 700; letter-spacing: -.02em; margin-bottom: 14px; }
-  .sync-copy p { color: var(--text-dim); font-size: 15px; margin-bottom: 14px; }
-  .sync-copy p strong { color: var(--text); font-weight: 600; }
-  .sync-fig svg { width: 100%; height: auto; display: block; }
-  .sy-label { font-family: var(--mono); font-size: 12px; fill: var(--text); text-anchor: middle; }
-  .sy-small { font-family: var(--mono); font-size: 10px; fill: var(--text-faint); text-anchor: middle; }
-  .sy-box { fill: var(--bg-card); stroke: var(--border-strong); rx: 10; }
-  .sy-relay { fill: rgba(61,107,53,.07); stroke: rgba(61,107,53,.45); rx: 10; }
-  .sy-wire { stroke: var(--border-strong); stroke-width: 1.5; fill: none; }
+  /* ── High-level view intro ── */
+  #view { border-top: 1px solid var(--border); padding-bottom: 40px; }
 
-  /* ── Part 2: scrollytelling graph ── */
-  #view { position: relative; padding: 0; border-top: 1px solid var(--border); }
+  /* ── Scroll-driven decision map ── */
+  #story { position: relative; padding: 0; }
   .story-scroller { position: relative; height: 560vh; }
   .story-stage {
     position: sticky; top: 0; height: 100vh; height: 100svh;
@@ -361,32 +363,6 @@
   }
   .story-detail .d-close:hover { color: var(--text); }
 
-  /* ── Ledger explainer (part 2 continued) ── */
-  #ledger { border-top: 1px solid var(--border); background: var(--bg-raised); }
-  .ledger-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 52px; align-items: center; max-width: 1000px; margin: 0 auto; }
-  @media (max-width: 800px) { .ledger-grid { grid-template-columns: 1fr; } }
-  .ledger-copy h3 { font-size: clamp(21px, 2.8vw, 27px); font-weight: 700; letter-spacing: -.02em; margin-bottom: 14px; }
-  .ledger-copy p { color: var(--text-dim); font-size: 15px; margin-bottom: 14px; }
-  .ledger-copy p strong { color: var(--text); font-weight: 600; }
-  .ledger-example {
-    background: var(--term-bg);
-    border: 1px solid var(--term-border);
-    border-radius: 12px;
-    box-shadow: 0 16px 40px rgba(61,87,54,.16);
-    overflow: hidden;
-  }
-  .ledger-example .term-bar { border-bottom: 1px solid rgba(255,255,255,.08); }
-  .ledger-example pre {
-    padding: 18px 20px;
-    font-family: var(--mono); font-size: 12.5px; line-height: 1.9;
-    color: var(--term-out);
-    overflow-x: auto;
-  }
-  .lx-step { color: var(--term-text); font-weight: 600; }
-  .lx-abandoned { color: #e08d85; }
-  .lx-survived { color: var(--term-green); }
-  .lx-dim { color: #7d8a76; }
-
   /* ── Footer ── */
   footer { border-top: 1px solid var(--border); padding: 44px 0; background: var(--bg-raised); }
   .footer-inner { display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
@@ -419,9 +395,10 @@
     </a>
     <div class="nav-links">
       <a href="#what">Overview</a>
-      <a href="#why">Why</a>
-      <a href="#git">The git</a>
+      <a href="/why">Why</a>
+      <a href="#collab">Collaboration</a>
       <a href="#view">The view</a>
+      <a href="/vision">Vision</a>
       <a class="nav-cta" href="/install">Install</a>
     </div>
   </div>
@@ -439,160 +416,91 @@
         <span class="term-prompt">$</span><span id="typed"></span><span class="cursor"></span>
       </div>
     </div>
-    <p class="hero-sub"><strong>GitTRACE</strong> is a trace-based git from epsilonAI. Your code stays on your machines, and every change keeps the reason it happened.</p>
+    <p class="hero-sub"><strong>GitTRACE</strong> is a trace-based git. Your code stays on your machines, and every change keeps the reason it happened.</p>
+    <div class="hero-tags">
+      <span class="sec-tag">Shared dev memory</span>
+      <span class="sec-tag">Encrypted transfer</span>
+    </div>
     <div class="hero-ctas">
       <a class="btn btn-primary" href="/install">Install the CLI</a>
-      <a class="btn btn-ghost" href="#what">What it is</a>
+      <a class="btn btn-ghost" href="/why">Why</a>
     </div>
   </div>
 </header>
 
-<!-- Features -->
+<!-- Overview -->
 <section id="what">
   <div class="wrap">
     <div class="sec-head">
-      <span class="sec-tag">Overview</span>
-      <h2>Features.</h2>
-      <p class="sec-lede">GitTRACE replaces the public forge with a local, trace-recording git. And it turns that trace into a high-level view of your whole product.</p>
+      <span class="sec-tag">GitTRACE</span>
+      <h2>A private git with perfect development memory for your product/company.</h2>
     </div>
     <div class="parts">
-      <a class="part-card" href="#git">
-        <span class="part-num">Part 1</span>
-        <h3>A new trace-based git</h3>
-        <p>Git-like version control that runs on your machines and records a trace of every change.</p>
+      <a class="part-card" href="#collab">
+        <h3>Shared memory</h3>
+        <p>Every commit, branch, merge, and the reason behind each change is recorded into one shared memory of the project that the whole team, humans and agents, reads from and writes to. New teammates and agents do not start from zero. They read the memory.</p>
         <ul class="part-feats">
-          <li>Commits, branches and merges, the workflow you already know</li>
-          <li>Every step stores the written reasoning behind it</li>
-          <li>Your code is never uploaded, team sync travels encrypted</li>
+          <li>When teams change, a lot of time is lost just understanding what exists. The same goes for any agent dropped into a huge codebase.</li>
+          <li>Vibe coding is hard to iterate on and track, with disconnected parallel sessions.</li>
         </ul>
         <span class="part-link">See it in the terminal &darr;</span>
       </a>
       <a class="part-card" href="#view">
-        <span class="part-num">Part 2</span>
-        <h3>A high-level view of your product</h3>
-        <p>The recorded trace becomes a picture of the codebase that answers questions code review cannot.</p>
+        <h3>Visual orchestration and decision tracking</h3>
         <ul class="part-feats">
-          <li>A zoomable codegraph of your history</li>
-          <li>The decision ledger, every attempt with its verdict</li>
-          <li>Code bloat insight, see what never earned its place</li>
+          <li>The decision ledger, each choice with its date and reason</li>
+          <li>Easily remove bloat code.</li>
         </ul>
-        <span class="part-link">Scroll the codegraph &darr;</span>
+        <span class="part-link">See your codebase from above &darr;</span>
       </a>
     </div>
   </div>
 </section>
 
-<!-- Problem -->
-<section id="why">
+<!-- Feature: agentic collaboration -->
+<section id="collab">
   <div class="wrap">
     <div class="sec-head">
-      <span class="sec-tag">Why</span>
-      <h2>Public code is training data now.</h2>
-      <p class="sec-lede">Crawlers hit public repos around the clock. Whatever you push gets scraped and ends up in someone's training set. The reporting on this is extensive.</p>
+      <span class="sec-tag">Agentic collaboration</span>
+      <h2>Easy agentic collaboration on a product/company level.</h2>
+      <p class="sec-lede">Both agents work on one common memory graph. There are no sessions and no temporary memories to stitch together. The moment Agent 2 records a step, it is part of the shared memory Agent 1 can pull from.</p>
     </div>
-    <div class="punch">
-      "The next training run is going to consume your value anyway."
-      <small>So keep your work where crawlers cannot reach it.</small>
-    </div>
-    <div class="press">
-      <a class="press-row" href="https://www.theverge.com/2022/11/8/23446821/microsoft-openai-github-copilot-class-action-lawsuit-ai-copyright-violation-training-data" target="_blank" rel="noopener">
-        <span class="press-src">The Verge</span>
-        <span class="press-main">
-          <span class="press-title">The lawsuit that could rewrite the rules of AI copyright</span>
-          <span class="press-note">Copilot was trained on public GitHub code, including licensed code. The scale of it triggered a class action against Microsoft, GitHub and OpenAI.</span>
-        </span>
-        <span class="press-arrow">↗</span>
-      </a>
-      <a class="press-row" href="https://arstechnica.com/ai/2025/03/devs-say-ai-crawlers-dominate-traffic-forcing-blocks-on-entire-countries/" target="_blank" rel="noopener">
-        <span class="press-src">Ars Technica</span>
-        <span class="press-main">
-          <span class="press-title">AI crawlers dominate traffic, forcing blocks on entire countries</span>
-          <span class="press-note">Some open source projects now see 97 percent of their traffic coming from AI company bots. The bots spoof user agents and ignore robots.txt.</span>
-        </span>
-        <span class="press-arrow">↗</span>
-      </a>
-      <a class="press-row" href="https://techcrunch.com/2025/03/27/open-source-devs-are-fighting-ai-crawlers-with-cleverness-and-vengeance/" target="_blank" rel="noopener">
-        <span class="press-src">TechCrunch</span>
-        <span class="press-main">
-          <span class="press-title">Open source devs are fighting AI crawlers with cleverness and vengeance</span>
-          <span class="press-note">Maintainers are building proof of work walls and tarpits just to keep scrapers off their infrastructure.</span>
-        </span>
-        <span class="press-arrow">↗</span>
-      </a>
-      <a class="press-row" href="https://www.cloudflare.com/press/press-releases/2025/cloudflare-just-changed-how-ai-crawlers-scrape-the-internet-at-large/" target="_blank" rel="noopener">
-        <span class="press-src">Cloudflare</span>
-        <span class="press-main">
-          <span class="press-title">Cloudflare blocks AI crawlers by default across its network</span>
-          <span class="press-note">Scraping got so routine that the biggest infrastructure provider on the web flipped its default to deny.</span>
-        </span>
-        <span class="press-arrow">↗</span>
-      </a>
+    <div class="collab-grid" id="collab-grid">
+      <div>
+        <div class="demo-term">
+          <div class="term-bar">
+            <span class="term-dot"></span><span class="term-dot"></span><span class="term-dot"></span>
+            <span class="term-title">one shared graph, three actors</span>
+            <button class="replay-btn" id="replay">replay</button>
+          </div>
+          <div class="demo-body" id="demo-body"></div>
+        </div>
+        <p class="fig-cap">A product manager and two agents in one recorded flow. No handoffs, no context files. The graph is the memory.</p>
+      </div>
+      <div>
+        <div id="collab-graph"></div>
+        <p class="fig-cap" id="collab-graph-cap">The shared memory graph, growing live as the session on the left plays out.</p>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- Part 1: the trace-based git -->
-<section id="git">
-  <div class="wrap">
-    <div class="sec-head">
-      <span class="sec-tag part">Part 1</span>
-      <h2>A git that records traces.</h2>
-      <p class="sec-lede">The commands below ran against the actual CLI. Record an edit with its reasoning, read a file's story back, fork a branch. File names are simplified so the demo reads clearly.</p>
-    </div>
-    <div class="demo-term">
-      <div class="term-bar">
-        <span class="term-dot"></span><span class="term-dot"></span><span class="term-dot"></span>
-        <span class="term-title">demo</span>
-        <button class="replay-btn" id="replay">replay</button>
-      </div>
-      <div class="demo-body" id="demo-body"></div>
-    </div>
-    <p class="demo-note">Captured from a real session following the quickstart in the docs.</p>
-
-    <div class="sync-grid">
-      <div class="sync-copy">
-        <h3>The relay never sees your code.</h3>
-        <p>A push archives the trace on your machine and encrypts it to every teammate's SSH public key before anything leaves the device. The relay stores ciphertext and nothing else.</p>
-        <p>Decryption needs a private key, and private keys <strong>never leave members' laptops</strong>. A full dump of the server yields password hashes, public keys and encrypted blobs.</p>
-        <p>The scheme is the audited age format with ChaCha20-Poly1305. Every push becomes a new version, so older states stay pullable and conflicts are detected instead of overwritten.</p>
-      </div>
-      <figure class="sync-fig">
-        <svg viewBox="0 0 520 300" aria-label="Encrypted sync between two laptops through a relay that stores only ciphertext">
-          <rect class="sy-box" x="20" y="110" width="120" height="80"/>
-          <text class="sy-label" x="80" y="145">your laptop</text>
-          <text class="sy-small" x="80" y="168">encrypts locally</text>
-          <rect class="sy-relay" x="200" y="95" width="120" height="110"/>
-          <text class="sy-label" x="260" y="130">relay</text>
-          <text class="sy-small" x="260" y="153">stores ciphertext</text>
-          <text class="sy-small" x="260" y="171">cannot decrypt</text>
-          <rect class="sy-box" x="380" y="110" width="120" height="80"/>
-          <text class="sy-label" x="440" y="145">teammate</text>
-          <text class="sy-small" x="440" y="168">decrypts locally</text>
-          <path class="sy-wire" d="M 140 150 H 200"/>
-          <path class="sy-wire" d="M 320 150 H 380"/>
-          <g id="packet1">
-            <rect x="-9" y="-7" width="18" height="14" rx="3" fill="rgba(61,107,53,.15)" stroke="#3d6b35" stroke-width="1.2"/>
-            <path d="M -3 -1 v -3 a 3 3 0 0 1 6 0 v 3 M -5 -1 h 10 v 7 h -10 z" fill="none" stroke="#3d6b35" stroke-width="1.1" transform="scale(.62) translate(0,-1)"/>
-          </g>
-          <g id="packet2">
-            <rect x="-9" y="-7" width="18" height="14" rx="3" fill="rgba(196,168,124,.25)" stroke="#a08050" stroke-width="1.2"/>
-            <path d="M -3 -1 v -3 a 3 3 0 0 1 6 0 v 3 M -5 -1 h 10 v 7 h -10 z" fill="none" stroke="#a08050" stroke-width="1.1" transform="scale(.62) translate(0,-1)"/>
-          </g>
-          <text class="sy-small" x="170" y="135">push</text>
-          <text class="sy-small" x="350" y="135">pull</text>
-        </svg>
-      </figure>
-    </div>
-  </div>
-</section>
-
-<!-- Part 2: scrollytelling codegraph -->
+<!-- Feature: the high-level view -->
 <section id="view">
+  <div class="wrap">
+    <div class="sec-head" style="margin-bottom: 0;">
+      <span class="sec-tag">The high-level view</span>
+      <h2>Monitor and organize every decision making and dev step for your product/company.</h2>
+    </div>
+  </div>
+</section>
+
+<!-- Scroll-driven decision map -->
+<section id="story">
   <div class="story-scroller" id="scroller">
     <div class="story-stage">
       <div class="story-head">
-        <span class="sec-tag part" style="background: var(--rust); border-color: var(--rust);">Part 2</span>
-        <h2>The high-level view of your product.</h2>
+        <h2>Every decision on one map.</h2>
       </div>
 
       <svg id="graph" viewBox="0 0 2000 950" preserveAspectRatio="xMidYMid meet" aria-label="A recorded development codegraph with two merged branches and abandoned attempts">
@@ -695,29 +603,16 @@
   </div>
 </section>
 
-<!-- Part 2 continued: the decision ledger, explained -->
-<section id="ledger">
+<!-- Vision teaser: the full autonomous-company story lives on /vision -->
+<section id="vision" style="border-top: 1px solid var(--border);">
   <div class="wrap">
-    <div class="ledger-grid">
-      <div class="ledger-copy">
-        <span class="sec-tag part" style="background: var(--rust); border-color: var(--rust);">Part 2</span>
-        <h3>The decision ledger, in plain words.</h3>
-        <p>Development is full of attempts that go nowhere. The ledger keeps them. Every step gets a verdict, <strong>survived</strong>, <strong>revised</strong> or <strong>abandoned</strong>, worked out from the commit record itself. Nobody has to remember to write anything down.</p>
-        <p>Six months later someone asks why <strong>payments.py</strong> retries a failed charge instead of failing fast. The answer is one command away, with the dead first attempt still attached.</p>
-        <p>The same verdicts show where bloat comes from. Code whose steps kept getting abandoned or rewritten stands out, so you can see what never earned its place in the codebase.</p>
-      </div>
-      <div class="ledger-example">
-        <div class="term-bar">
-          <span class="term-dot"></span><span class="term-dot"></span><span class="term-dot"></span>
-          <span class="term-title">decision ledger</span>
-        </div>
-        <pre><span class="lx-step">step#13  payment-retry</span>       <span class="lx-abandoned">abandoned</span>  <span class="lx-dim">replaced by step 14</span>
-  <span class="lx-dim">added a retry constant, never wired it up</span>
-
-<span class="lx-step">step#14  payment-retry-wire</span>  <span class="lx-survived">survived</span>
-  <span class="lx-dim">a failed capture now retries inside a 30s
-  window, cleared once the charge succeeds</span></pre>
-      </div>
+    <div class="sec-head" style="margin-bottom: 28px;">
+      <span class="sec-tag">Vision</span>
+      <h2>The full autonomous company.</h2>
+      <p class="sec-lede">Departments of agents, humans in the loop, one shared ledger. It improves on market signals.</p>
+    </div>
+    <div style="text-align: center;">
+      <a class="btn btn-primary" href="/vision">See the vision</a>
     </div>
   </div>
 </section>
@@ -726,17 +621,19 @@
   <div class="wrap footer-inner">
     <div class="footer-co">
       <span class="co-name"><span class="eps">epsilon</span>AI</span>
-      <span class="footer-tag">GitTRACE is the trace-based git from epsilonAI. Your code stays off the public internet.</span>
     </div>
     <div class="footer-links">
       <a href="#what">Overview</a>
-      <a href="#git">The git</a>
+      <a href="/why">Why</a>
+      <a href="#collab">Collaboration</a>
       <a href="#view">The view</a>
+      <a href="/vision">Vision</a>
       <a href="/install">Install</a>
     </div>
   </div>
 </footer>
 
+<script src="/assets/collab-graph.js"></script>
 <script>
 (function () {
   'use strict';
@@ -928,59 +825,87 @@
   window.addEventListener('resize', update);
   update();
 
-  /* ── Sync packet animation ── */
-  const p1 = document.getElementById('packet1');
-  const p2 = document.getElementById('packet2');
-  if (!reduced && p1) {
-    let t0 = performance.now();
-    (function move(now) {
-      const t = ((now - t0) / 2600) % 1;
-      const leg = (x0, x1, tt) => x0 + (x1 - x0) * tt;
-      p1.setAttribute('transform', 'translate(' + leg(140, 200, Math.min(1, t * 2)) + ',150)');
-      p1.style.opacity = t < .55 ? 1 : 0;
-      const t2 = Math.max(0, (t - .5) * 2);
-      p2.setAttribute('transform', 'translate(' + leg(320, 380, t2) + ',150)');
-      p2.style.opacity = t >= .5 ? 1 : 0;
-      requestAnimationFrame(move);
-    })(t0);
-  } else if (p1) {
-    p1.setAttribute('transform', 'translate(170,150)');
-    p2.setAttribute('transform', 'translate(350,150)');
+  /* ── Live collaboration graph (built by a separate module) ──
+     Contract: /assets/collab-graph.js exposes window.GitTraceCollabGraph with
+     init(el) and step(n). The typing demo below calls step(1..5) as the story
+     reaches each beat. Everything is guarded so the demo runs fine alone. */
+  const graphEl = document.getElementById('collab-graph');
+  const hasGraph = typeof window.GitTraceCollabGraph !== 'undefined' && graphEl;
+  if (hasGraph) {
+    try { window.GitTraceCollabGraph.init(graphEl); } catch (_) {}
+  } else {
+    const grid = document.getElementById('collab-grid');
+    if (grid) grid.classList.add('no-graph');
+  }
+  function graphStep(n) {
+    if (!hasGraph) return;
+    try { window.GitTraceCollabGraph.step(n); } catch (_) {}
   }
 
-  /* ── Terminal replay (termynal line model) ──
-     Recorded 2026-08-10 against the real CLI in a scratch repo.
-     Output shape is verbatim, file and step names simplified for the demo. */
+  /* ── Collaboration typing demo (termynal line model) ──
+     One product manager, two agents, one shared memory graph. */
   const session = [
-    { in: 'codegraph-trace record add-login --author human --reasoning "wrote login() by hand" --before 2a148af --after 384841a --repo . --no-embeddings' },
-    { out: 'Recorded human-written step add-login: 1 node link(s) across 1 changed file(s) [lineage=main].' },
-    { out: 'Locked 1 node(s) from agent overwrite.' },
-    { in: 'codegraph-trace history auth.py --repo .' },
-    { out: "Reasoning log for 'auth.py' (1 step(s)):" },
+    { who: 'pm', in: 'tracer login' },
+    { out: "Logged in to 'acme' as pm (admin)." },
+    { who: 'pm', in: 'codegraph-trace panel --repo shop' },
+    { out: 'Codegraph at http://127.0.0.1:8765. 41 recorded steps on the shared graph.', step: 1 },
+    { who: 'pm', note: 'delegates checkout-flow to Agent 1' },
+    { who: 'pm', note: 'delegates payment-retry to Agent 2', step: 2 },
     { out: '' },
-    { out: '1. step#1 add-login  @ 384841a190  2026-08-10T14:00:38.464418+00:00' },
-    { out: '   reasoning:' },
-    { out: '   wrote login() by hand' },
-    { out: '   objects touched:' },
-    { out: '     + added (1): auth.py [human-written, locked]' },
-    { in: 'codegraph-trace branch create feat-oauth --from 1 --repo .' },
-    { out: "Created lineage 'feat-oauth' forked from version 1 (384841a190) on git branch 'feat-oauth'." },
-    { out: "Checked out git branch 'feat-oauth'. Recorded steps will belong to this lineage." },
-    { out: "Main cannot see this lineage until it is accepted with 'codegraph-trace branch merge feat-oauth'." }
+    { who: 'a1', in: 'tracer pull --repo shop' },
+    { out: "No registered key for 'agent1'. Ask an admin for access." },
+    { who: 'a1', note: 'asks the product manager to authenticate them' },
+    { who: 'pm', in: 'tracer entity add-user agent1' },
+    { out: "Added 'agent1'. Their key now decrypts every team push.", step: 3 },
+    { out: '' },
+    { who: 'a2', in: 'tracer push --repo shop -m "payment retry wired"' },
+    { out: 'Recorded to the shared graph. Version 7 uploaded, encrypted.', step: 4 },
+    { out: '' },
+    { who: 'a1', in: 'tracer pull --repo shop' },
+    { out: "Version 7 decrypted. Agent 2's steps are already in Agent 1's graph.", step: 5 }
   ];
+  const whoLabel = { pm: 'pm', a1: 'agent 1', a2: 'agent 2' };
 
   const demoBody = document.getElementById('demo-body');
   let playToken = 0;
 
+  function lineEl(l) {
+    const s = document.createElement('span');
+    s.className = 't-line ' + (l.in != null ? 't-in' : l.note != null ? 't-note' : 't-out');
+    if (l.who) {
+      const w = document.createElement('span');
+      w.className = 't-who ' + l.who;
+      w.textContent = whoLabel[l.who];
+      s.appendChild(w);
+    } else if (l.out !== '') {
+      const pad = document.createElement('span');
+      pad.className = 't-who';
+      pad.textContent = '';
+      s.appendChild(pad);
+    }
+    return s;
+  }
+
   function playDemo() {
     const token = ++playToken;
     demoBody.innerHTML = '';
+    if (hasGraph && typeof window.GitTraceCollabGraph.reset === 'function') {
+      try { window.GitTraceCollabGraph.reset(); } catch (_) {}
+    }
     if (reduced) {
       session.forEach(l => {
-        const s = document.createElement('span');
-        s.className = 't-line ' + (l.in != null ? 't-in' : 't-out');
-        s.textContent = l.in != null ? l.in : l.out;
+        const s = lineEl(l);
+        const body = document.createElement('span');
+        if (l.in != null) {
+          const p = document.createElement('span');
+          p.className = 't-prompt';
+          p.textContent = '$ ';
+          s.appendChild(p);
+        }
+        body.textContent = l.in != null ? l.in : (l.note != null ? l.note : (l.out || '\u00a0'));
+        s.appendChild(body);
         demoBody.appendChild(s);
+        if (l.step) graphStep(l.step);
       });
       return;
     }
@@ -989,21 +914,39 @@
       if (token !== playToken) return;
       if (li >= session.length) return;
       const l = session[li++];
-      const s = document.createElement('span');
+      const s = lineEl(l);
       demoBody.appendChild(s);
+      const fireStep = () => { if (l.step) graphStep(l.step); };
+      // Lines that trigger a graph beat pause afterwards, so each beat's
+      // animation (about 2.5s for the auth grant) finishes before the next.
+      const afterStep = l.step ? 3200 : 0;
       if (l.in != null) {
-        s.className = 't-line t-in t-cursor';
+        const p = document.createElement('span');
+        p.className = 't-prompt';
+        p.textContent = '$ ';
+        s.appendChild(p);
+        const body = document.createElement('span');
+        s.appendChild(body);
+        s.classList.add('t-cursor');
         let c = 0;
         (function typeChar() {
           if (token !== playToken) return;
-          s.textContent = l.in.slice(0, ++c);
-          if (c < l.in.length) return setTimeout(typeChar, 14 + Math.random() * 22);
-          setTimeout(() => { s.classList.remove('t-cursor'); nextLine(); }, 380);
+          body.textContent = l.in.slice(0, ++c);
+          if (c < l.in.length) return setTimeout(typeChar, 16 + Math.random() * 24);
+          setTimeout(() => {
+            s.classList.remove('t-cursor');
+            fireStep();
+            if (afterStep) setTimeout(nextLine, afterStep); else nextLine();
+          }, 420);
         })();
       } else {
-        s.className = 't-line t-out';
-        s.textContent = l.out || '\u00a0';
-        setTimeout(nextLine, 55);
+        const body = document.createElement('span');
+        body.textContent = l.note != null ? l.note : (l.out || '\u00a0');
+        s.appendChild(body);
+        setTimeout(() => {
+          fireStep();
+          if (afterStep) setTimeout(nextLine, afterStep); else nextLine();
+        }, l.note != null ? 620 : 240);
       }
     }
     nextLine();
@@ -1016,6 +959,7 @@
   }, { threshold: 0.35 });
   demoSeen.observe(demoBody);
   document.getElementById('replay').addEventListener('click', playDemo);
+
 })();
 </script>
 </body>

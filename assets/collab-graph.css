@@ -1,0 +1,168 @@
+/* GitTRACE — shared memory collaboration graph
+   Palette matches index.html :root values. Self-contained, no external deps. */
+
+.cg-root {
+  --cg-bg-card: #fffef5;
+  --cg-border: #ddd8b8;
+  --cg-border-strong: #c8c29e;
+  --cg-text: #1f2937;
+  --cg-dim: #5c6356;
+  --cg-faint: #8a8d82;
+  --cg-green: #3d6b35;
+  --cg-green-dark: #3d5736;
+  --cg-green-light: #5a8a50;
+  --cg-warm: #c4a87c;
+  --cg-rust: #c2410c;
+  --cg-amber: #ca8a04;
+  --cg-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --cg-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  position: relative;
+  width: 100%;
+}
+
+.cg-root svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+  overflow: visible;
+}
+
+/* ── Edges ── */
+.cg-edge {
+  fill: none;
+  stroke: var(--cg-border-strong);
+  stroke-width: 2;
+  stroke-linecap: round;
+  opacity: 0;
+}
+.cg-edge.cg-on { opacity: 1; }
+.cg-edge.cg-branch { stroke: var(--cg-green-light); stroke-width: 2.2; }
+.cg-edge.cg-green { stroke: var(--cg-green); stroke-width: 2.6; }
+
+/* dashed arc used while auth travels from the PM to Agent 1's branch */
+.cg-pulsepath {
+  fill: none;
+  stroke: rgba(61, 107, 53, .55);
+  stroke-width: 2;
+  stroke-dasharray: 5 8;
+  stroke-linecap: round;
+  opacity: 0;
+  transition: opacity .45s ease;
+}
+.cg-pulsepath.cg-on { opacity: 1; }
+
+/* ── Nodes ── */
+.cg-node { opacity: 0; }
+.cg-node.cg-on { opacity: 1; }
+
+.cg-pop { transform-box: fill-box; transform-origin: center; }
+.cg-node.cg-on .cg-pop { animation: cg-pop .6s cubic-bezier(.34, 1.56, .64, 1) both; }
+@keyframes cg-pop {
+  from { transform: scale(.25); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
+.cg-float {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: cg-float 5s ease-in-out infinite;
+}
+@keyframes cg-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-3.5px); }
+}
+
+.cg-node .cg-c {
+  fill: var(--cg-bg-card);
+  stroke: var(--cg-green);
+  stroke-width: 2.5;
+  transition: stroke .5s ease, fill .5s ease;
+}
+.cg-node.cg-person   .cg-c { stroke-width: 2.8; }
+.cg-node.cg-hub      .cg-c { stroke: var(--cg-green-dark); }
+.cg-node.cg-agent    .cg-c { stroke: var(--cg-green-light); }
+.cg-node.cg-decision .cg-c { stroke: var(--cg-rust); }
+.cg-node.cg-lock     .cg-c { stroke: var(--cg-amber); }
+.cg-node.cg-lock.cg-granted .cg-c { stroke: var(--cg-green); }
+.cg-node.cg-done     .cg-c { stroke: var(--cg-green); fill: rgba(90, 138, 80, .16); }
+
+/* halo rings */
+.cg-halo {
+  fill: none;
+  stroke: var(--cg-green-light);
+  stroke-width: 1.5;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.cg-node.cg-decision .cg-halo { stroke: var(--cg-rust); }
+.cg-node.cg-lock .cg-halo { stroke: var(--cg-amber); }
+.cg-node.cg-lock.cg-granted .cg-halo { stroke: var(--cg-green); }
+
+.cg-pulse .cg-halo { animation: cg-pulse 2.6s ease-in-out infinite; }
+@keyframes cg-pulse {
+  0%, 100% { opacity: .12; }
+  50%      { opacity: .7; }
+}
+
+.cg-blip .cg-halo { animation: cg-blip .9s ease-out 1 both; }
+@keyframes cg-blip {
+  0%   { opacity: .9; transform: scale(.55); }
+  100% { opacity: 0;  transform: scale(1.7); }
+}
+
+/* the shared node lighting up */
+.cg-shine .cg-c {
+  filter: drop-shadow(0 0 7px rgba(90, 138, 80, .85));
+}
+
+/* icons */
+.cg-icon { fill: none; stroke: var(--cg-green); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.cg-agent .cg-icon { stroke: var(--cg-green-light); }
+.cg-lockicon { fill: none; stroke: var(--cg-amber); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: stroke .5s ease; }
+.cg-granted .cg-lockicon { stroke: var(--cg-green); }
+
+/* granted check badge on the auth node */
+.cg-badge { opacity: 0; transform-box: fill-box; transform-origin: center; }
+.cg-granted .cg-badge { opacity: 1; animation: cg-pop .5s cubic-bezier(.34, 1.56, .64, 1) both; }
+
+/* ── Text ── */
+.cg-lab {
+  font-family: var(--cg-mono);
+  font-size: 13px;
+  fill: var(--cg-dim);
+  text-anchor: middle;
+}
+.cg-name {
+  font-family: var(--cg-sans);
+  font-size: 13.5px;
+  font-weight: 600;
+  fill: var(--cg-text);
+  text-anchor: middle;
+}
+.cg-sub {
+  font-family: var(--cg-mono);
+  font-size: 10.5px;
+  fill: var(--cg-faint);
+  text-anchor: middle;
+}
+.cg-tag {
+  font-family: var(--cg-mono);
+  font-size: 11.5px;
+  fill: var(--cg-green);
+  text-anchor: middle;
+  opacity: 0;
+  transition: opacity .5s ease;
+}
+.cg-tag.cg-on { opacity: 1; }
+
+/* travelling dot */
+.cg-dot {
+  fill: var(--cg-green);
+  filter: drop-shadow(0 0 4px rgba(61, 107, 53, .6));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cg-root *, .cg-root { animation: none !important; transition: none !important; }
+}

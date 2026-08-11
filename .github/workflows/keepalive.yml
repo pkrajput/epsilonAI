@@ -1,0 +1,35 @@
+name: Keep the site awake
+
+# Render's free tier spins the instance down after ~15 minutes without
+# traffic. The in-app self-ping (see server.js) resets the idle timer while
+# the process is alive, but it cannot wake an instance that already spun
+# down (after a deploy, a crash, or a missed ping). This external ping can.
+#
+# Setup: add a repository variable SITE_URL with the public site URL
+# (GitHub repo -> Settings -> Secrets and variables -> Actions -> Variables),
+# e.g. https://your-service.onrender.com
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    name: Ping /healthz
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping the health endpoint
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: |
+          if [ -z "$SITE_URL" ]; then
+            echo "::warning::SITE_URL repository variable is not set, skipping the ping." \
+                 "Add it under GitHub repo -> Settings -> Secrets and variables -> Actions -> Variables" \
+                 "with the public site URL, e.g. https://your-service.onrender.com"
+            exit 0
+          fi
+          # A spun-down Render instance answers slowly on the first request
+          # while it boots, so allow a generous timeout and a few retries.
+          curl -fsS --max-time 90 --retry 3 --retry-delay 5 "${SITE_URL%/}/healthz"
+          echo "Site is awake."

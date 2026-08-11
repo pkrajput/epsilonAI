@@ -33,10 +33,14 @@ jobs:
             sleep 0.5
           done
           curl -fsS http://localhost:3000/healthz | grep -q ok
-          # Landing page must ship the codegraph and the Features section.
+          # Landing page must ship the decision map and link to the vision page.
           curl -fsS http://localhost:3000/ | grep -q 'id="graph"'
-          curl -fsS http://localhost:3000/ | grep -q 'Features.'
-          # Install guide must be served at /install.
+          curl -fsS http://localhost:3000/ | grep -q 'href="/vision"'
+          # Vision page must serve the autonomous-company story and its module.
+          curl -fsS http://localhost:3000/vision | grep -q 'The full autonomous company'
+          curl -fsS http://localhost:3000/assets/codegraph-story.js | grep -q 'GitTraceCodegraphStory'
+          # Why page and install guide must be served on their routes.
+          curl -fsS http://localhost:3000/why | grep -q 'Why GitTRACE exists'
           curl -fsS http://localhost:3000/install | grep -q 'Install the CLI'
           kill "$SERVER_PID"
 

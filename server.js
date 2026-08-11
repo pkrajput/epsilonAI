@@ -15,14 +15,30 @@ app.get('/healthz', (req, res) => {
   res.type('text/plain').send('ok');
 });
 
-// Serve only the landing page and the install guide, never the rest of the
-// repo. Both pages are fully self-contained (inline CSS/JS/SVG).
+// Serve only the landing page, the why page, the install guide, and the
+// assets folder, never the rest of the repo.
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// Codegraph figures and optional modules shown on the landing page. Missing
+// asset files must 404 (not redirect to the HTML page), otherwise a script tag
+// pointing at an absent module would try to execute the landing page as JS.
+app.use('/assets', express.static(path.join(__dirname, 'assets'), { maxAge: '1d' }));
+app.use('/assets', (req, res) => {
+  res.status(404).type('text/plain').send('not found');
+});
+
+app.get(['/why', '/why.html'], (req, res) => {
+  res.sendFile(path.join(__dirname, 'why.html'));
+});
+
 app.get(['/install', '/install.html'], (req, res) => {
   res.sendFile(path.join(__dirname, 'install.html'));
+});
+
+app.get(['/vision', '/vision.html'], (req, res) => {
+  res.sendFile(path.join(__dirname, 'vision.html'));
 });
 
 // Anything else goes home.

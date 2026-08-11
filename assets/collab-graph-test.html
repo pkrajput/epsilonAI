@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>collab-graph module test</title>
+<link rel="stylesheet" href="collab-graph.css">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #fefce8;
+    color: #1f2937;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 36px 24px 48px;
+  }
+  header {
+    width: min(1100px, 100%);
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 10px;
+  }
+  h1 {
+    font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+    font-size: 15px;
+    font-weight: 600;
+    color: #5c6356;
+  }
+  .controls { display: flex; gap: 8px; align-items: center; }
+  .controls button {
+    font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+    font-size: 12px;
+    padding: 4px 12px;
+    border: 1px solid #c8c29e;
+    border-radius: 7px;
+    background: #fffef5;
+    color: #1f2937;
+    cursor: pointer;
+  }
+  .controls button:hover { background: #f5f0d0; }
+  .controls button.primary { background: #3d6b35; border-color: #3d6b35; color: #fffef5; }
+  #collab-graph {
+    width: min(1100px, 100%);
+    background: #fffef5;
+    border: 1px solid #ddd8b8;
+    border-radius: 16px;
+    padding: 26px 20px 14px;
+    box-shadow: 0 14px 40px rgba(61, 87, 54, .1);
+  }
+  .caption {
+    width: min(1100px, 100%);
+    margin-top: 16px;
+    display: flex;
+    gap: 14px;
+    align-items: baseline;
+  }
+  .caption .idx {
+    font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+    font-size: 12px;
+    color: #c2410c;
+    white-space: nowrap;
+  }
+  .caption p { font-size: 14.5px; color: #5c6356; transition: opacity .3s; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>collab-graph — module test</h1>
+  <div class="controls">
+    <button data-step="1">1</button>
+    <button data-step="2">2</button>
+    <button data-step="3">3</button>
+    <button data-step="4">4</button>
+    <button data-step="5">5</button>
+    <button class="primary" id="replay">replay</button>
+  </div>
+</header>
+
+<div id="collab-graph"></div>
+
+<div class="caption">
+  <span class="idx" id="cap-idx">—</span>
+  <p id="cap-text">Loading the shared memory graph…</p>
+</div>
+
+<script src="collab-graph.js"></script>
+<script>
+(function () {
+  'use strict';
+  var captions = {
+    1: 'The product manager signs in and sees the product\u2019s memory graph.',
+    2: 'Work is delegated: Agent 1 takes the checkout flow, Agent 2 takes payment retry. Both branch off the same graph.',
+    3: 'Agent 1 hits a step that needs credentials. The product manager grants auth, on the same graph.',
+    4: 'Agent 2 records the finished retry logic. It is part of the shared graph the instant it lands, no separate session.',
+    5: 'Agent 1 pulls Agent 2\u2019s work straight from the shared graph. One memory, nothing to hand over.'
+  };
+  var capIdx = document.getElementById('cap-idx');
+  var capText = document.getElementById('cap-text');
+  var container = document.getElementById('collab-graph');
+  var timers = [];
+
+  function setCaption(n) {
+    capText.style.opacity = 0;
+    setTimeout(function () {
+      capIdx.textContent = 'step ' + n + ' / 5';
+      capText.textContent = captions[n];
+      capText.style.opacity = 1;
+    }, 200);
+  }
+
+  function goTo(n) {
+    GitTraceCollabGraph.step(n);
+    setCaption(n);
+  }
+
+  function autoplay() {
+    timers.forEach(clearTimeout);
+    timers = [];
+    // step n at its start time; pauses sized to let each animation finish
+    [[1, 500], [2, 3400], [3, 5800], [4, 9400], [5, 12800]].forEach(function (s) {
+      timers.push(setTimeout(function () { goTo(s[0]); }, s[1]));
+    });
+  }
+
+  GitTraceCollabGraph.init(container);
+  autoplay();
+
+  document.querySelectorAll('[data-step]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      timers.forEach(clearTimeout);
+      goTo(Number(b.dataset.step));
+    });
+  });
+
+  document.getElementById('replay').addEventListener('click', function () {
+    GitTraceCollabGraph.reset();
+    autoplay();
+  });
+})();
+</script>
+</body>
+</html>
